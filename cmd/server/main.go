@@ -9,6 +9,7 @@ import (
 	authhttp "backend-service-internpro/internal/auth/delivery/http"
 	"backend-service-internpro/internal/container"
 	"backend-service-internpro/internal/pkg/logger"
+	"backend-service-internpro/internal/pkg/middleware"
 	userhttp "backend-service-internpro/internal/user/delivery/http"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -39,26 +40,12 @@ func main() {
 	// Router (Gin) + Huma (OpenAPI runtime)
 	r := gin.Default()
 
-	// Add request logging middleware
-	r.Use(func(c *gin.Context) {
-		start := time.Now()
-
-		appLogger.HTTP().LogRequest(
-			c.Request.Method,
-			c.Request.URL.Path,
-			c.GetHeader("User-Agent"),
-			c.ClientIP(),
-		)
-
-		c.Next()
-
-		appLogger.HTTP().LogResponse(
-			c.Request.Method,
-			c.Request.URL.Path,
-			c.Writer.Status(),
-			time.Since(start),
-		)
-	})
+	// Add middlewares
+	r.Use(middleware.RecoveryMiddleware())
+	r.Use(middleware.SecurityHeadersMiddleware())
+	r.Use(middleware.CORSMiddleware())
+	r.Use(middleware.LoggingMiddleware())
+	r.Use(middleware.RateLimitMiddleware(time.Second, 100)) // 100 requests per second per IP
 
 	// Configure Huma with detailed OpenAPI documentation
 	config := huma.DefaultConfig("SchoolTech Apps API", "1.0.0")
@@ -82,6 +69,21 @@ func main() {
 			URL:         "http://localhost:8080",
 			Description: "Local development",
 		},
+	}
+
+	// Initialize components if not exists
+	if config.OpenAPI.Components == nil {
+		config.OpenAPI.Components = &huma.Components{}
+	}
+	if config.OpenAPI.Components.SecuritySchemes == nil {
+		config.OpenAPI.Components.SecuritySchemes = make(map[string]*huma.SecurityScheme)
+	}
+
+	// Add security schemes
+	config.OpenAPI.Components.SecuritySchemes["bearerAuth"] = &huma.SecurityScheme{
+		Type:         "http",
+		Scheme:       "bearer",
+		BearerFormat: "JWT",
 	}
 
 	// Add API tags for better organization
@@ -112,7 +114,7 @@ func main() {
 
 	// Register routes
 	authhttp.New(api, c.AuthService)
-	userhttp.New(api) // User management routes
+	userhttp.New(api, c.UserService, c.JWTSecrets) // User management routes
 
 	// Health check endpoint
 	r.GET("/healthz", func(c *gin.Context) {

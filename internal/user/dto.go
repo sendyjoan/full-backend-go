@@ -1,11 +1,19 @@
 package user
 
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
+
 // User represents a user in the system
 type User struct {
-	ID    int    `json:"id" doc:"User ID"`
-	Name  string `json:"name" doc:"User full name"`
-	Email string `json:"email" doc:"User email address"`
-	Role  string `json:"role" doc:"User role (admin, teacher, student)"`
+	ID        uuid.UUID `json:"id" doc:"User ID"`
+	Username  string    `json:"username" doc:"User username"`
+	Email     string    `json:"email" doc:"User email address"`
+	Fullname  string    `json:"fullname" doc:"User full name"`
+	CreatedAt time.Time `json:"created_at" doc:"User creation date"`
+	UpdatedAt time.Time `json:"updated_at" doc:"User last update date"`
 }
 
 // UserListResponse represents the response for user list
@@ -29,22 +37,22 @@ type Metadata struct {
 
 // CreateUserRequest represents request to create a new user
 type CreateUserRequest struct {
-	Name     string `json:"name" minLength:"1" maxLength:"100" doc:"User full name"`
-	Email    string `json:"email" format:"email" doc:"User email address"`
+	Username string `json:"username" minLength:"1" maxLength:"60" doc:"User username"`
+	Email    string `json:"email" format:"email" maxLength:"120" doc:"User email address"`
+	Fullname string `json:"fullname" minLength:"1" maxLength:"120" doc:"User full name"`
 	Password string `json:"password" minLength:"8" doc:"User password"`
-	Role     string `json:"role" enum:"admin,teacher,student" doc:"User role"`
 }
 
 // CreateUserResponse represents response after creating a user
 type CreateUserResponse struct {
-	ID      int    `json:"id" doc:"Created user ID"`
-	Message string `json:"message" doc:"Success message"`
+	ID      uuid.UUID `json:"id" doc:"Created user ID"`
+	Message string    `json:"message" doc:"Success message"`
 }
 
 // UpdateUserRequest represents request to update user
 type UpdateUserRequest struct {
-	Name string `json:"name" minLength:"1" maxLength:"100" doc:"User full name"`
-	Role string `json:"role" enum:"admin,teacher,student" doc:"User role"`
+	Username string `json:"username" minLength:"1" maxLength:"60" doc:"User username"`
+	Fullname string `json:"fullname" minLength:"1" maxLength:"120" doc:"User full name"`
 }
 
 // UserBasicResponse represents a basic response with message for user operations

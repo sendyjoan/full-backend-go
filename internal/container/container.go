@@ -4,10 +4,12 @@ import (
 	"time"
 
 	"backend-service-internpro/config"
-	"backend-service-internpro/internal/auth/repository"
-	"backend-service-internpro/internal/auth/service"
+	authRepo "backend-service-internpro/internal/auth/repository"
+	authService "backend-service-internpro/internal/auth/service"
 	jwtpkg "backend-service-internpro/internal/pkg/jwt"
 	"backend-service-internpro/internal/pkg/migration"
+	userRepo "backend-service-internpro/internal/user/repository"
+	userService "backend-service-internpro/internal/user/service"
 
 	"gorm.io/gorm"
 )
@@ -16,8 +18,10 @@ import (
 type Container struct {
 	DB          *gorm.DB
 	Config      *Config
-	AuthRepo    repository.Repository
-	AuthService service.Service
+	AuthRepo    authRepo.Repository
+	AuthService authService.Service
+	UserRepo    userRepo.Repository
+	UserService userService.Service
 	JWTSecrets  jwtpkg.Secrets
 }
 
@@ -67,19 +71,23 @@ func NewContainer() (*Container, error) {
 	}
 
 	// Initialize repositories
-	authRepo := repository.New(db)
+	authRepository := authRepo.New(db)
+	userRepository := userRepo.New(db)
 
 	// Initialize services with configuration
-	authService := service.NewWithConfig(authRepo, jwtSecrets, service.Config{
+	authSvc := authService.NewWithConfig(authRepository, jwtSecrets, authService.Config{
 		AccessTTL:  cfg.JWT.AccessTokenTTL,
 		RefreshTTL: cfg.JWT.RefreshTokenTTL,
 	})
+	userSvc := userService.New(userRepository)
 
 	return &Container{
 		DB:          db,
 		Config:      cfg,
-		AuthRepo:    authRepo,
-		AuthService: authService,
+		AuthRepo:    authRepository,
+		AuthService: authSvc,
+		UserRepo:    userRepository,
+		UserService: userSvc,
 		JWTSecrets:  jwtSecrets,
 	}, nil
 }

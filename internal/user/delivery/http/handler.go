@@ -4,18 +4,25 @@ import (
 	"context"
 	"net/http"
 
+	"backend-service-internpro/internal/pkg/jwt"
+	"backend-service-internpro/internal/pkg/middleware"
 	"backend-service-internpro/internal/user"
+	"backend-service-internpro/internal/user/service"
 
 	"github.com/danielgtaylor/huma/v2"
 )
 
 type Handler struct {
-	// svc service.Service // akan diimplementasikan nanti
+	svc        service.Service
+	jwtSecrets jwt.Secrets
 }
 
 // New registers user management routes into the Huma API.
-func New(api huma.API) {
-	_ = &Handler{} // Will be used when service is implemented
+func New(api huma.API, svc service.Service, jwtSecrets jwt.Secrets) {
+	h := &Handler{
+		svc:        svc,
+		jwtSecrets: jwtSecrets,
+	}
 
 	// Group /v1/users
 	g := huma.NewGroup(api, "/v1/users")
@@ -26,28 +33,30 @@ func New(api huma.API) {
 		Path:    "",
 		Summary: "Get list of users with pagination",
 		Tags:    []string{"User Management"},
+		Security: []map[string][]string{
+			{"bearerAuth": {}},
+		},
 	}, func(ctx context.Context, in *struct {
-		Page  int `query:"page" minimum:"1" default:"1" doc:"Page number"`
-		Limit int `query:"limit" minimum:"1" maximum:"100" default:"10" doc:"Items per page"`
+		Authorization string `header:"Authorization" required:"true" doc:"Bearer token"`
+		Page          int    `query:"page" minimum:"1" default:"1" doc:"Page number"`
+		Limit         int    `query:"limit" minimum:"1" maximum:"100" default:"10" doc:"Items per page"`
 	}) (*struct {
 		Body user.UserListResponse
 	}, error) {
-		// TODO: Implement user list logic
+		// Validate token
+		if err := h.validateToken(in.Authorization); err != nil {
+			return nil, err
+		}
+
+		resp, err := h.svc.ListUsers(ctx, in.Page, in.Limit)
+		if err != nil {
+			return nil, huma.Error500InternalServerError(err.Error())
+		}
+
 		return &struct {
 			Body user.UserListResponse
 		}{
-			Body: user.UserListResponse{
-				Data: []user.User{
-					{ID: 1, Name: "John Doe", Email: "john@example.com", Role: "teacher"},
-					{ID: 2, Name: "Jane Smith", Email: "jane@example.com", Role: "student"},
-				},
-				Meta: user.Metadata{
-					Page:       in.Page,
-					Limit:      in.Limit,
-					TotalPages: 1,
-					TotalItems: 2,
-				},
-			},
+			Body: *resp,
 		}, nil
 	})
 
@@ -57,23 +66,29 @@ func New(api huma.API) {
 		Path:    "/{id}",
 		Summary: "Get user details by ID",
 		Tags:    []string{"User Management"},
+		Security: []map[string][]string{
+			{"bearerAuth": {}},
+		},
 	}, func(ctx context.Context, in *struct {
-		ID int `path:"id" minimum:"1" doc:"User ID"`
+		Authorization string `header:"Authorization" required:"true" doc:"Bearer token"`
+		ID            string `path:"id" format:"uuid" doc:"User ID"`
 	}) (*struct {
 		Body user.UserResponse
 	}, error) {
-		// TODO: Implement get user by ID logic
+		// Validate token
+		if err := h.validateToken(in.Authorization); err != nil {
+			return nil, err
+		}
+
+		resp, err := h.svc.GetUserByID(ctx, in.ID)
+		if err != nil {
+			return nil, huma.Error404NotFound(err.Error())
+		}
+
 		return &struct {
 			Body user.UserResponse
 		}{
-			Body: user.UserResponse{
-				User: user.User{
-					ID:    in.ID,
-					Name:  "John Doe",
-					Email: "john@example.com",
-					Role:  "teacher",
-				},
-			},
+			Body: *resp,
 		}, nil
 	})
 
@@ -83,19 +98,29 @@ func New(api huma.API) {
 		Path:    "",
 		Summary: "Create a new user",
 		Tags:    []string{"User Management"},
+		Security: []map[string][]string{
+			{"bearerAuth": {}},
+		},
 	}, func(ctx context.Context, in *struct {
-		Body user.CreateUserRequest
+		Authorization string `header:"Authorization" required:"true" doc:"Bearer token"`
+		Body          user.CreateUserRequest
 	}) (*struct {
 		Body user.CreateUserResponse
 	}, error) {
-		// TODO: Implement create user logic
+		// Validate token
+		if err := h.validateToken(in.Authorization); err != nil {
+			return nil, err
+		}
+
+		resp, err := h.svc.CreateUser(ctx, in.Body)
+		if err != nil {
+			return nil, huma.Error400BadRequest(err.Error())
+		}
+
 		return &struct {
 			Body user.CreateUserResponse
 		}{
-			Body: user.CreateUserResponse{
-				ID:      123,
-				Message: "User created successfully",
-			},
+			Body: *resp,
 		}, nil
 	})
 
@@ -105,19 +130,30 @@ func New(api huma.API) {
 		Path:    "/{id}",
 		Summary: "Update user information",
 		Tags:    []string{"User Management"},
+		Security: []map[string][]string{
+			{"bearerAuth": {}},
+		},
 	}, func(ctx context.Context, in *struct {
-		ID   int `path:"id" minimum:"1" doc:"User ID"`
-		Body user.UpdateUserRequest
+		Authorization string `header:"Authorization" required:"true" doc:"Bearer token"`
+		ID            string `path:"id" format:"uuid" doc:"User ID"`
+		Body          user.UpdateUserRequest
 	}) (*struct {
 		Body user.UserBasicResponse
 	}, error) {
-		// TODO: Implement update user logic
+		// Validate token
+		if err := h.validateToken(in.Authorization); err != nil {
+			return nil, err
+		}
+
+		resp, err := h.svc.UpdateUser(ctx, in.ID, in.Body)
+		if err != nil {
+			return nil, huma.Error400BadRequest(err.Error())
+		}
+
 		return &struct {
 			Body user.UserBasicResponse
 		}{
-			Body: user.UserBasicResponse{
-				Message: "User updated successfully",
-			},
+			Body: *resp,
 		}, nil
 	})
 
@@ -127,18 +163,35 @@ func New(api huma.API) {
 		Path:    "/{id}",
 		Summary: "Delete user by ID",
 		Tags:    []string{"User Management"},
+		Security: []map[string][]string{
+			{"bearerAuth": {}},
+		},
 	}, func(ctx context.Context, in *struct {
-		ID int `path:"id" minimum:"1" doc:"User ID"`
+		Authorization string `header:"Authorization" required:"true" doc:"Bearer token"`
+		ID            string `path:"id" format:"uuid" doc:"User ID"`
 	}) (*struct {
 		Body user.UserBasicResponse
 	}, error) {
-		// TODO: Implement delete user logic
+		// Validate token
+		if err := h.validateToken(in.Authorization); err != nil {
+			return nil, err
+		}
+
+		resp, err := h.svc.DeleteUser(ctx, in.ID)
+		if err != nil {
+			return nil, huma.Error404NotFound(err.Error())
+		}
+
 		return &struct {
 			Body user.UserBasicResponse
 		}{
-			Body: user.UserBasicResponse{
-				Message: "User deleted successfully",
-			},
+			Body: *resp,
 		}, nil
 	})
+}
+
+// validateToken validates the Authorization header and returns error if invalid
+func (h *Handler) validateToken(authHeader string) error {
+	_, err := middleware.ValidateToken(authHeader, h.jwtSecrets)
+	return err
 }
