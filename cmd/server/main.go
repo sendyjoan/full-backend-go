@@ -49,7 +49,7 @@ func main() {
 
 	// Configure Huma with detailed OpenAPI documentation
 	config := huma.DefaultConfig("SchoolTech Apps API", "1.0.0")
-	config.OpenAPI.Info.Description = "Dokumentasi API untuk platform SchoolTech. Ini mencakup endpoint untuk autentikasi, manajemen sekolah, guru, siswa, dan lainnya."
+	config.OpenAPI.Info.Description = "Dokumentasi API untuk platform SchoolTech. Ini mencakup endpoint untuk autentikasi, kepentingan internal SchoolTech Indonesia, dan kepentingan produk SchoolTech Indonesia."
 	config.OpenAPI.Info.Contact = &huma.Contact{
 		Name:  "Tim Developer SchoolTech",
 		Email: "dev@schooltech.id",
