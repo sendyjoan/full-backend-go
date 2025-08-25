@@ -5,6 +5,8 @@ import (
 
 	"backend-service-internpro/internal/auth"
 
+	"golang.org/x/crypto/bcrypt"
+
 	"gorm.io/gorm"
 )
 
@@ -39,11 +41,16 @@ func CreateDummyData(db *gorm.DB) error {
 
 	if userCount == 0 {
 		// Create a dummy user
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
+		if err != nil {
+			return err
+		}
+
 		user := auth.User{
 			Username:     "testuser",
 			Email:        "test@example.com",
 			Fullname:     "Test User",
-			PasswordHash: "$2a$10$8X8X8X8X8X8X8X8X8X8X8O", // password: "password123"
+			PasswordHash: string(hashedPassword),
 		}
 
 		if err := db.Create(&user).Error; err != nil {

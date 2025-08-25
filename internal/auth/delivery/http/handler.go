@@ -26,10 +26,12 @@ func New(api huma.API, svc service.Service) {
 		Path:    "/login",
 		Summary: "Login and get access/refresh tokens",
 	}, func(ctx context.Context, in *struct {
-		Body          auth.LoginRequest `json:"body"`
-		UserAgent     string            `header:"User-Agent"`
-		XForwardedFor string            `header:"X-Forwarded-For"`
-	}) (*auth.LoginResponse, error) {
+		Body          auth.LoginRequest
+		UserAgent     string `header:"User-Agent"`
+		XForwardedFor string `header:"X-Forwarded-For"`
+	}) (*struct {
+		Body auth.LoginResponse
+	}, error) {
 		ua := in.UserAgent
 		ip := in.XForwardedFor
 
@@ -40,7 +42,11 @@ func New(api huma.API, svc service.Service) {
 			}
 			return nil, huma.Error500InternalServerError("login failed")
 		}
-		return &auth.LoginResponse{AccessToken: access, RefreshToken: refresh}, nil
+		return &struct {
+			Body auth.LoginResponse
+		}{
+			Body: auth.LoginResponse{AccessToken: access, RefreshToken: refresh},
+		}, nil
 	})
 
 	// POST /refresh
@@ -49,10 +55,12 @@ func New(api huma.API, svc service.Service) {
 		Path:    "/refresh",
 		Summary: "Exchange refresh token for new access token",
 	}, func(ctx context.Context, in *struct {
-		Body          auth.RefreshRequest `json:"body"`
-		UserAgent     string              `header:"User-Agent"`
-		XForwardedFor string              `header:"X-Forwarded-For"`
-	}) (*auth.RefreshResponse, error) {
+		Body          auth.RefreshRequest
+		UserAgent     string `header:"User-Agent"`
+		XForwardedFor string `header:"X-Forwarded-For"`
+	}) (*struct {
+		Body auth.RefreshResponse
+	}, error) {
 		ua := in.UserAgent
 		ip := in.XForwardedFor
 
@@ -63,7 +71,11 @@ func New(api huma.API, svc service.Service) {
 			}
 			return nil, huma.Error500InternalServerError("refresh failed")
 		}
-		return &auth.RefreshResponse{AccessToken: access}, nil
+		return &struct {
+			Body auth.RefreshResponse
+		}{
+			Body: auth.RefreshResponse{AccessToken: access},
+		}, nil
 	})
 
 	// POST /logout
@@ -72,15 +84,21 @@ func New(api huma.API, svc service.Service) {
 		Path:    "/logout",
 		Summary: "Revoke refresh token (logout)",
 	}, func(ctx context.Context, in *struct {
-		Body auth.RefreshRequest `json:"body"`
-	}) (*auth.BasicResponse, error) {
+		Body auth.RefreshRequest
+	}) (*struct {
+		Body auth.BasicResponse
+	}, error) {
 		if err := h.svc.Logout(in.Body.RefreshToken); err != nil {
 			if appErr, ok := apperrors.IsAppError(err); ok {
 				return nil, appErr.ToHumaError()
 			}
 			return nil, huma.Error500InternalServerError("logout failed")
 		}
-		return &auth.BasicResponse{Message: "logout successful"}, nil
+		return &struct {
+			Body auth.BasicResponse
+		}{
+			Body: auth.BasicResponse{Message: "logout successful"},
+		}, nil
 	})
 
 	// POST /forgot
@@ -89,15 +107,21 @@ func New(api huma.API, svc service.Service) {
 		Path:    "/forgot",
 		Summary: "Send OTP for password reset",
 	}, func(ctx context.Context, in *struct {
-		Body auth.ForgotRequest `json:"body"`
-	}) (*auth.BasicResponse, error) {
+		Body auth.ForgotRequest
+	}) (*struct {
+		Body auth.BasicResponse
+	}, error) {
 		err := h.svc.Forgot(in.Body.Email)
 		// Always return success message for security (prevent email enumeration)
 		if err != nil {
 			// Log the actual error for debugging but don't expose it
 			// You can add logging here later
 		}
-		return &auth.BasicResponse{Message: "If the email exists, an OTP has been sent"}, nil
+		return &struct {
+			Body auth.BasicResponse
+		}{
+			Body: auth.BasicResponse{Message: "If the email exists, an OTP has been sent"},
+		}, nil
 	})
 
 	// POST /verify-otp
@@ -106,15 +130,21 @@ func New(api huma.API, svc service.Service) {
 		Path:    "/verify-otp",
 		Summary: "Validate OTP for password reset",
 	}, func(ctx context.Context, in *struct {
-		Body auth.VerifyOTPRequest `json:"body"`
-	}) (*auth.BasicResponse, error) {
+		Body auth.VerifyOTPRequest
+	}) (*struct {
+		Body auth.BasicResponse
+	}, error) {
 		if err := h.svc.VerifyOTP(in.Body.Email, in.Body.OTP); err != nil {
 			if appErr, ok := apperrors.IsAppError(err); ok {
 				return nil, appErr.ToHumaError()
 			}
 			return nil, huma.Error500InternalServerError("verification failed")
 		}
-		return &auth.BasicResponse{Message: "OTP verified successfully"}, nil
+		return &struct {
+			Body auth.BasicResponse
+		}{
+			Body: auth.BasicResponse{Message: "OTP verified successfully"},
+		}, nil
 	})
 
 	// POST /reset-password
@@ -123,14 +153,20 @@ func New(api huma.API, svc service.Service) {
 		Path:    "/reset-password",
 		Summary: "Reset password with valid OTP",
 	}, func(ctx context.Context, in *struct {
-		Body auth.ResetPasswordRequest `json:"body"`
-	}) (*auth.BasicResponse, error) {
+		Body auth.ResetPasswordRequest
+	}) (*struct {
+		Body auth.BasicResponse
+	}, error) {
 		if err := h.svc.ResetPassword(in.Body.Email, in.Body.OTP, in.Body.NewPassword); err != nil {
 			if appErr, ok := apperrors.IsAppError(err); ok {
 				return nil, appErr.ToHumaError()
 			}
 			return nil, huma.Error500InternalServerError("password reset failed")
 		}
-		return &auth.BasicResponse{Message: "Password reset successful"}, nil
+		return &struct {
+			Body auth.BasicResponse
+		}{
+			Body: auth.BasicResponse{Message: "Password reset successful"},
+		}, nil
 	})
 }
