@@ -25,6 +25,7 @@ func New(api huma.API, svc service.Service) {
 		Method:  http.MethodPost,
 		Path:    "/login",
 		Summary: "Login and get access/refresh tokens",
+		Tags:    []string{"Authentication"},
 	}, func(ctx context.Context, in *struct {
 		Body          auth.LoginRequest
 		UserAgent     string `header:"User-Agent"`
@@ -54,6 +55,7 @@ func New(api huma.API, svc service.Service) {
 		Method:  http.MethodPost,
 		Path:    "/refresh",
 		Summary: "Exchange refresh token for new access token",
+		Tags:    []string{"Authentication"},
 	}, func(ctx context.Context, in *struct {
 		Body          auth.RefreshRequest
 		UserAgent     string `header:"User-Agent"`
@@ -83,6 +85,7 @@ func New(api huma.API, svc service.Service) {
 		Method:  http.MethodPost,
 		Path:    "/logout",
 		Summary: "Revoke refresh token (logout)",
+		Tags:    []string{"Authentication"},
 	}, func(ctx context.Context, in *struct {
 		Body auth.RefreshRequest
 	}) (*struct {
@@ -106,6 +109,7 @@ func New(api huma.API, svc service.Service) {
 		Method:  http.MethodPost,
 		Path:    "/forgot",
 		Summary: "Send OTP for password reset",
+		Tags:    []string{"Authentication"},
 	}, func(ctx context.Context, in *struct {
 		Body auth.ForgotRequest
 	}) (*struct {
@@ -129,6 +133,7 @@ func New(api huma.API, svc service.Service) {
 		Method:  http.MethodPost,
 		Path:    "/verify-otp",
 		Summary: "Validate OTP for password reset",
+		Tags:    []string{"Authentication"},
 	}, func(ctx context.Context, in *struct {
 		Body auth.VerifyOTPRequest
 	}) (*struct {
@@ -152,6 +157,7 @@ func New(api huma.API, svc service.Service) {
 		Method:  http.MethodPost,
 		Path:    "/reset-password",
 		Summary: "Reset password with valid OTP",
+		Tags:    []string{"Authentication"},
 	}, func(ctx context.Context, in *struct {
 		Body auth.ResetPasswordRequest
 	}) (*struct {
