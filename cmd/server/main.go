@@ -6,11 +6,9 @@ import (
 	"os"
 	"time"
 
-	"backend-service-internpro/config"
 	authhttp "backend-service-internpro/internal/auth/delivery/http"
-	"backend-service-internpro/internal/auth/repository"
-	"backend-service-internpro/internal/auth/service"
-	jwtpkg "backend-service-internpro/internal/pkg/jwt"
+	"backend-service-internpro/internal/container"
+	"backend-service-internpro/internal/pkg/logger"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humagin"
@@ -18,34 +16,68 @@ import (
 )
 
 func main() {
-	// Initialize configuration (loads .env and connects to database)
-	config.InitConfig()
+	// Initialize logger
+	logger.InitGlobalLogger(logger.LevelInfo)
+	appLogger := logger.Global()
+
+	// Initialize container with all dependencies
+	appLogger.Info("initializing application container...")
+	c, err := container.NewContainer()
+	if err != nil {
+		log.Fatal("failed to initialize container:", err)
+	}
 
 	// Get port from environment or use default
-	port := os.Getenv("APP_PORT")
-	if port == "" {
-		port = "8080"
+	port := c.Config.Server.Port
+
+	// Set Gin mode based on environment
+	if os.Getenv("GIN_MODE") == "" {
+		gin.SetMode(gin.ReleaseMode)
 	}
 
 	// Router (Gin) + Huma (OpenAPI runtime)
 	r := gin.Default()
 
+	// Add request logging middleware
+	r.Use(func(c *gin.Context) {
+		start := time.Now()
+
+		appLogger.HTTP().LogRequest(
+			c.Request.Method,
+			c.Request.URL.Path,
+			c.GetHeader("User-Agent"),
+			c.ClientIP(),
+		)
+
+		c.Next()
+
+		appLogger.HTTP().LogResponse(
+			c.Request.Method,
+			c.Request.URL.Path,
+			c.Writer.Status(),
+			time.Since(start),
+		)
+	})
+
 	api := humagin.New(r, huma.DefaultConfig("Auth API", "1.0.0"))
-	// (opsional) “first hit to generate”: OpenAPI disajikan saat /docs atau /openapi.json pertama kali diakses.
-	// Huma otomatis serve docs di /docs & spec di /openapi.json.
 
-	// DI
-	repo := repository.New(config.DB)
-	secrets := jwtpkg.Secrets{Access: config.JwtSecret, Refresh: config.JwtSecret}
-	svc := service.New(repo, secrets)
-	authhttp.New(api, svc)
+	// Register routes
+	authhttp.New(api, c.AuthService)
 
-	// Health
-	r.GET("/healthz", func(c *gin.Context) { c.JSON(200, gin.H{"status": "ok", "time": time.Now()}) })
+	// Health check endpoint
+	r.GET("/healthz", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"status":  "ok",
+			"time":    time.Now(),
+			"version": "1.0.0",
+			"service": "auth-api",
+		})
+	})
 
-	// Start
-	log.Printf("🚀 Server listening on port %s", port)
+	// Start server
+	appLogger.Info("starting server", "port", port)
 	if err := http.ListenAndServe(":"+port, r); err != nil {
+		appLogger.ErrorWithErr("server failed to start", err)
 		log.Fatal(err)
 	}
 }

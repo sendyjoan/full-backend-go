@@ -84,3 +84,8 @@ func parseInt(s string) int {
 	}
 	return val
 }
+
+// LoadEnvVar loads environment variable
+func LoadEnvVar(key string) string {
+	return os.Getenv(key)
+}

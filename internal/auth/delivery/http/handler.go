@@ -6,6 +6,7 @@ import (
 
 	"backend-service-internpro/internal/auth"
 	"backend-service-internpro/internal/auth/service"
+	apperrors "backend-service-internpro/internal/pkg/errors"
 
 	"github.com/danielgtaylor/huma/v2"
 )
@@ -34,7 +35,10 @@ func New(api huma.API, svc service.Service) {
 
 		access, refresh, err := h.svc.Login(in.Body.UsernameOrEmail, in.Body.Password, ua, ip)
 		if err != nil {
-			return nil, huma.Error401Unauthorized("invalid credentials")
+			if appErr, ok := apperrors.IsAppError(err); ok {
+				return nil, appErr.ToHumaError()
+			}
+			return nil, huma.Error500InternalServerError("login failed")
 		}
 		return &auth.LoginResponse{AccessToken: access, RefreshToken: refresh}, nil
 	})
@@ -54,7 +58,10 @@ func New(api huma.API, svc service.Service) {
 
 		access, err := h.svc.Refresh(in.Body.RefreshToken, ua, ip)
 		if err != nil {
-			return nil, huma.Error401Unauthorized("invalid refresh token")
+			if appErr, ok := apperrors.IsAppError(err); ok {
+				return nil, appErr.ToHumaError()
+			}
+			return nil, huma.Error500InternalServerError("refresh failed")
 		}
 		return &auth.RefreshResponse{AccessToken: access}, nil
 	})
@@ -68,9 +75,12 @@ func New(api huma.API, svc service.Service) {
 		Body auth.RefreshRequest `json:"body"`
 	}) (*auth.BasicResponse, error) {
 		if err := h.svc.Logout(in.Body.RefreshToken); err != nil {
-			return nil, huma.Error400BadRequest("logout failed")
+			if appErr, ok := apperrors.IsAppError(err); ok {
+				return nil, appErr.ToHumaError()
+			}
+			return nil, huma.Error500InternalServerError("logout failed")
 		}
-		return &auth.BasicResponse{Message: "ok"}, nil
+		return &auth.BasicResponse{Message: "logout successful"}, nil
 	})
 
 	// POST /forgot
@@ -81,10 +91,11 @@ func New(api huma.API, svc service.Service) {
 	}, func(ctx context.Context, in *struct {
 		Body auth.ForgotRequest `json:"body"`
 	}) (*auth.BasicResponse, error) {
-		// IMPORTANT: return generic response to avoid enumeration (service handles that)
-		if err := h.svc.Forgot(in.Body.Email); err != nil {
-			// still return generic not-found to client if you want to hide existence
-			return &auth.BasicResponse{Message: "If the email exists, an OTP has been sent"}, nil
+		err := h.svc.Forgot(in.Body.Email)
+		// Always return success message for security (prevent email enumeration)
+		if err != nil {
+			// Log the actual error for debugging but don't expose it
+			// You can add logging here later
 		}
 		return &auth.BasicResponse{Message: "If the email exists, an OTP has been sent"}, nil
 	})
@@ -98,9 +109,12 @@ func New(api huma.API, svc service.Service) {
 		Body auth.VerifyOTPRequest `json:"body"`
 	}) (*auth.BasicResponse, error) {
 		if err := h.svc.VerifyOTP(in.Body.Email, in.Body.OTP); err != nil {
-			return nil, huma.Error400BadRequest("invalid/expired otp")
+			if appErr, ok := apperrors.IsAppError(err); ok {
+				return nil, appErr.ToHumaError()
+			}
+			return nil, huma.Error500InternalServerError("verification failed")
 		}
-		return &auth.BasicResponse{Message: "OTP valid"}, nil
+		return &auth.BasicResponse{Message: "OTP verified successfully"}, nil
 	})
 
 	// POST /reset-password
@@ -112,8 +126,11 @@ func New(api huma.API, svc service.Service) {
 		Body auth.ResetPasswordRequest `json:"body"`
 	}) (*auth.BasicResponse, error) {
 		if err := h.svc.ResetPassword(in.Body.Email, in.Body.OTP, in.Body.NewPassword); err != nil {
-			return nil, huma.Error400BadRequest("reset failed")
+			if appErr, ok := apperrors.IsAppError(err); ok {
+				return nil, appErr.ToHumaError()
+			}
+			return nil, huma.Error500InternalServerError("password reset failed")
 		}
-		return &auth.BasicResponse{Message: "password updated"}, nil
+		return &auth.BasicResponse{Message: "Password reset successful"}, nil
 	})
 }
