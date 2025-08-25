@@ -37,10 +37,10 @@ type Metadata struct {
 
 // CreateUserRequest represents request to create a new user
 type CreateUserRequest struct {
-	Username string `json:"username" minLength:"1" maxLength:"60" doc:"User username"`
-	Email    string `json:"email" format:"email" maxLength:"120" doc:"User email address"`
-	Fullname string `json:"fullname" minLength:"1" maxLength:"120" doc:"User full name"`
-	Password string `json:"password" minLength:"8" doc:"User password"`
+	Username string `json:"username" form:"username" minLength:"1" maxLength:"60" doc:"User username"`
+	Email    string `json:"email" form:"email" format:"email" maxLength:"120" doc:"User email address"`
+	Fullname string `json:"fullname" form:"fullname" minLength:"1" maxLength:"120" doc:"User full name"`
+	Password string `json:"password" form:"password" minLength:"8" doc:"User password"`
 }
 
 // CreateUserResponse represents response after creating a user
@@ -51,8 +51,8 @@ type CreateUserResponse struct {
 
 // UpdateUserRequest represents request to update user
 type UpdateUserRequest struct {
-	Username string `json:"username" minLength:"1" maxLength:"60" doc:"User username"`
-	Fullname string `json:"fullname" minLength:"1" maxLength:"120" doc:"User full name"`
+	Username string `json:"username" form:"username" minLength:"1" maxLength:"60" doc:"User username"`
+	Fullname string `json:"fullname" form:"fullname" minLength:"1" maxLength:"120" doc:"User full name"`
 }
 
 // UserBasicResponse represents a basic response with message for user operations

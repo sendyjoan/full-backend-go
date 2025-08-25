@@ -44,6 +44,7 @@ func main() {
 	r.Use(middleware.RecoveryMiddleware())
 	r.Use(middleware.SecurityHeadersMiddleware())
 	r.Use(middleware.CORSMiddleware())
+	r.Use(middleware.FormDataToJSONMiddleware()) // Add FormData support
 	r.Use(middleware.LoggingMiddleware())
 	r.Use(middleware.RateLimitMiddleware(time.Second, 100)) // 100 requests per second per IP
 
