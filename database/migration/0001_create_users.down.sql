@@ -1,0 +1,34 @@
+CREATE TABLE users (
+  id CHAR(36) PRIMARY KEY,
+  username VARCHAR(60) UNIQUE NOT NULL,
+  email VARCHAR(120) UNIQUE NOT NULL,
+  fullname VARCHAR(120) NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE otps (
+  id CHAR(36) PRIMARY KEY,
+  user_id CHAR(36) NOT NULL,
+  code VARCHAR(6) NOT NULL,
+  purpose VARCHAR(32) NOT NULL,           -- e.g. "forgot_password"
+  expires_at TIMESTAMP NOT NULL,
+  used TINYINT(1) DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX(user_id),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE refresh_tokens (
+  id CHAR(36) PRIMARY KEY,
+  user_id CHAR(36) NOT NULL,
+  token_hash VARCHAR(255) NOT NULL,
+  user_agent VARCHAR(255),
+  ip VARCHAR(64),
+  revoked TINYINT(1) DEFAULT 0,
+  expires_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX(user_id),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
