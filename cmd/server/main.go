@@ -49,25 +49,25 @@ func main() {
 	r.Use(middleware.RateLimitMiddleware(time.Second, 100)) // 100 requests per second per IP
 
 	// Configure Huma with detailed OpenAPI documentation
-	config := huma.DefaultConfig("SchoolTech Apps API", "1.0.0")
+	config := huma.DefaultConfig("Gapura SchoolTech API", "0.0.1")
 	config.OpenAPI.Info.Description = "Dokumentasi API untuk platform SchoolTech. Ini mencakup endpoint untuk autentikasi, kepentingan internal SchoolTech Indonesia, dan kepentingan produk SchoolTech Indonesia."
 	config.OpenAPI.Info.Contact = &huma.Contact{
-		Name:  "Tim Developer SchoolTech",
-		Email: "dev@schooltech.id",
-		URL:   "https://schooltech.id",
+		Name:  "ITDB SchoolTech",
+		Email: "itdb@schooltechindonesia.com",
+		URL:   "https://schooltechindonesia.com",
 	}
 	config.OpenAPI.Info.License = &huma.License{
 		Name: "MIT",
 		URL:  "https://opensource.org/licenses/MIT",
 	}
-	config.OpenAPI.Info.TermsOfService = "https://schooltech.id/terms"
+	config.OpenAPI.Info.TermsOfService = "https://schooltechindonesia.com/terms"
 	config.OpenAPI.Servers = []*huma.Server{
 		{
-			URL:         "https://api.schooltech.id",
+			URL:         "https://api.schooltechindonesia.com",
 			Description: "Production server",
 		},
 		{
-			URL:         "http://localhost:8080",
+			URL:         "http://localhost:8000",
 			Description: "Local development",
 		},
 	}
@@ -122,8 +122,8 @@ func main() {
 		c.JSON(200, gin.H{
 			"status":  "ok",
 			"time":    time.Now(),
-			"version": "1.0.0",
-			"service": "auth-api",
+			"version": "0.0.1",
+			"service": "Schooltech API Service",
 		})
 	})
 
