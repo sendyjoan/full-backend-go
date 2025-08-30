@@ -67,6 +67,14 @@ func main() {
 			Description: "Production server",
 		},
 		{
+			URL:         "https://staging-api.schooltechindonesia.com",
+			Description: "Staging server",
+		},
+		{
+			URL:         "https://testing-api.schooltechindonesia.com",
+			Description: "Testing server",
+		},
+		{
 			URL:         "http://localhost:8000",
 			Description: "Local development",
 		},
