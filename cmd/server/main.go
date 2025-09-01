@@ -10,6 +10,8 @@ import (
 	"backend-service-internpro/internal/container"
 	"backend-service-internpro/internal/pkg/logger"
 	"backend-service-internpro/internal/pkg/middleware"
+	rbachttp "backend-service-internpro/internal/rbac/delivery/http"
+	schoolhttp "backend-service-internpro/internal/school/delivery/http"
 	userhttp "backend-service-internpro/internal/user/delivery/http"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -106,6 +108,22 @@ func main() {
 			Description: "Endpoint untuk manajemen data pengguna",
 		},
 		{
+			Name:        "RBAC - Roles",
+			Description: "Endpoint untuk manajemen roles (peran) dalam sistem RBAC",
+		},
+		{
+			Name:        "RBAC - Permissions",
+			Description: "Endpoint untuk manajemen permissions (izin) dalam sistem RBAC",
+		},
+		{
+			Name:        "RBAC - Menus",
+			Description: "Endpoint untuk manajemen menus dalam sistem RBAC",
+		},
+		{
+			Name:        "RBAC - User Roles",
+			Description: "Endpoint untuk assignment dan manajemen roles pengguna",
+		},
+		{
 			Name:        "School Management",
 			Description: "Endpoint untuk manajemen data sekolah",
 		},
@@ -123,7 +141,9 @@ func main() {
 
 	// Register routes
 	authhttp.New(api, c.AuthService)
-	userhttp.New(api, c.UserService, c.JWTSecrets) // User management routes
+	userhttp.New(api, c.UserService, c.JWTSecrets)     // User management routes
+	rbachttp.NewHuma(api, c.RBACService, c.JWTSecrets) // RBAC management routes with Swagger
+	schoolhttp.New(api, c.SchoolService, c.JWTSecrets) // School management routes
 
 	// Health check endpoint
 	r.GET("/healthz", func(c *gin.Context) {

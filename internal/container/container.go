@@ -8,6 +8,10 @@ import (
 	authService "backend-service-internpro/internal/auth/service"
 	jwtpkg "backend-service-internpro/internal/pkg/jwt"
 	"backend-service-internpro/internal/pkg/migration"
+	rbacRepo "backend-service-internpro/internal/rbac/repository"
+	rbacService "backend-service-internpro/internal/rbac/service"
+	schoolRepo "backend-service-internpro/internal/school/repository"
+	schoolService "backend-service-internpro/internal/school/service"
 	userRepo "backend-service-internpro/internal/user/repository"
 	userService "backend-service-internpro/internal/user/service"
 
@@ -16,13 +20,17 @@ import (
 
 // Container holds all dependencies
 type Container struct {
-	DB          *gorm.DB
-	Config      *Config
-	AuthRepo    authRepo.Repository
-	AuthService authService.Service
-	UserRepo    userRepo.Repository
-	UserService userService.Service
-	JWTSecrets  jwtpkg.Secrets
+	DB            *gorm.DB
+	Config        *Config
+	AuthRepo      authRepo.Repository
+	AuthService   authService.Service
+	UserRepo      userRepo.Repository
+	UserService   userService.Service
+	RBACRepo      rbacRepo.Repository
+	RBACService   rbacService.Service
+	SchoolRepo    schoolRepo.SchoolRepository
+	SchoolService schoolService.SchoolService
+	JWTSecrets    jwtpkg.Secrets
 }
 
 // Config holds all configuration values
@@ -73,6 +81,8 @@ func NewContainer() (*Container, error) {
 	// Initialize repositories
 	authRepository := authRepo.New(db)
 	userRepository := userRepo.New(db)
+	rbacRepository := rbacRepo.NewRepository(db)
+	schoolRepository := schoolRepo.NewSchoolRepository(db)
 
 	// Initialize services with configuration
 	authSvc := authService.NewWithConfig(authRepository, jwtSecrets, authService.Config{
@@ -80,15 +90,21 @@ func NewContainer() (*Container, error) {
 		RefreshTTL: cfg.JWT.RefreshTokenTTL,
 	})
 	userSvc := userService.New(userRepository)
+	rbacSvc := rbacService.NewService(rbacRepository)
+	schoolSvc := schoolService.NewSchoolService(schoolRepository)
 
 	return &Container{
-		DB:          db,
-		Config:      cfg,
-		AuthRepo:    authRepository,
-		AuthService: authSvc,
-		UserRepo:    userRepository,
-		UserService: userSvc,
-		JWTSecrets:  jwtSecrets,
+		DB:            db,
+		Config:        cfg,
+		AuthRepo:      authRepository,
+		AuthService:   authSvc,
+		UserRepo:      userRepository,
+		UserService:   userSvc,
+		RBACRepo:      rbacRepository,
+		RBACService:   rbacSvc,
+		SchoolRepo:    schoolRepository,
+		SchoolService: schoolSvc,
+		JWTSecrets:    jwtSecrets,
 	}, nil
 }
 
@@ -118,13 +134,8 @@ func loadConfig() (*Config, error) {
 func initDatabase() (*gorm.DB, error) {
 	db := config.DB
 
-	// Run migrations
-	if err := migration.AutoMigrate(db); err != nil {
-		return nil, err
-	}
-
-	// Create dummy data if needed (for development)
-	if err := migration.CreateDummyData(db); err != nil {
+	// Run migrations automatically in development environment
+	if err := migration.AutoMigrateIfDevelopment(db); err != nil {
 		return nil, err
 	}
 
