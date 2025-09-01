@@ -17,19 +17,29 @@ func CORSMiddleware() gin.HandlerFunc {
 		allowedOrigins := map[string]bool{
 			"http://localhost:8080":    true,
 			"https://localhost:8080":   true,
+			"http://localhost:8000":    true,
+			"https://localhost:8000":   true,
 			"http://127.0.0.1:8080":    true,
 			"https://127.0.0.1:8080":   true,
+			"http://127.0.0.1:8000":    true,
+			"https://127.0.0.1:8000":   true,
 			"https://unpkg.com":        true,
 			"https://cdn.jsdelivr.net": true,
 		}
 
-		if allowedOrigins[origin] || origin == "" {
-			c.Header("Access-Control-Allow-Origin", origin)
+		// For development, allow any localhost origin
+		if origin == "" || allowedOrigins[origin] {
+			if origin == "" {
+				c.Header("Access-Control-Allow-Origin", "*")
+			} else {
+				c.Header("Access-Control-Allow-Origin", origin)
+			}
 		}
 
 		c.Header("Access-Control-Allow-Credentials", "true")
-		c.Header("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
-		c.Header("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE, PATCH")
+		c.Header("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With, X-HTTP-Method-Override")
+		c.Header("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE, PATCH, HEAD")
+		c.Header("Access-Control-Max-Age", "86400")
 
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)

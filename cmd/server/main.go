@@ -77,7 +77,7 @@ func main() {
 			Description: "Testing server",
 		},
 		{
-			URL:         "http://localhost:8000",
+			URL:         "http://localhost:" + port,
 			Description: "Local development",
 		},
 	}
