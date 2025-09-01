@@ -1,34 +1,27 @@
-CREATE TABLE users (
-  id CHAR(36) PRIMARY KEY,
-  username VARCHAR(60) UNIQUE NOT NULL,
-  email VARCHAR(120) UNIQUE NOT NULL,
-  fullname VARCHAR(120) NOT NULL,
-  password_hash VARCHAR(255) NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
+-- Drop tables in reverse order to avoid foreign key constraint violations
 
-CREATE TABLE otps (
-  id CHAR(36) PRIMARY KEY,
-  user_id CHAR(36) NOT NULL,
-  code VARCHAR(6) NOT NULL,
-  purpose VARCHAR(32) NOT NULL,           -- e.g. "forgot_password"
-  expires_at TIMESTAMP NOT NULL,
-  used TINYINT(1) DEFAULT 0,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  INDEX(user_id),
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
+-- First remove foreign key constraints that reference users table
+ALTER TABLE schools DROP FOREIGN KEY IF EXISTS fk_schools_created_by;
+ALTER TABLE schools DROP FOREIGN KEY IF EXISTS fk_schools_updated_by;
+ALTER TABLE schools DROP FOREIGN KEY IF EXISTS fk_schools_deleted_by;
 
-CREATE TABLE refresh_tokens (
-  id CHAR(36) PRIMARY KEY,
-  user_id CHAR(36) NOT NULL,
-  token_hash VARCHAR(255) NOT NULL,
-  user_agent VARCHAR(255),
-  ip VARCHAR(64),
-  revoked TINYINT(1) DEFAULT 0,
-  expires_at TIMESTAMP NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  INDEX(user_id),
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
+ALTER TABLE majorities DROP FOREIGN KEY IF EXISTS fk_majorities_created_by;
+ALTER TABLE majorities DROP FOREIGN KEY IF EXISTS fk_majorities_updated_by;
+ALTER TABLE majorities DROP FOREIGN KEY IF EXISTS fk_majorities_deleted_by;
+
+ALTER TABLE classes DROP FOREIGN KEY IF EXISTS fk_classes_created_by;
+ALTER TABLE classes DROP FOREIGN KEY IF EXISTS fk_classes_updated_by;
+ALTER TABLE classes DROP FOREIGN KEY IF EXISTS fk_classes_deleted_by;
+
+ALTER TABLE partners DROP FOREIGN KEY IF EXISTS fk_partners_created_by;
+ALTER TABLE partners DROP FOREIGN KEY IF EXISTS fk_partners_updated_by;
+ALTER TABLE partners DROP FOREIGN KEY IF EXISTS fk_partners_deleted_by;
+
+-- Drop tables in reverse dependency order
+DROP TABLE IF EXISTS refresh_tokens;
+DROP TABLE IF EXISTS otps;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS classes;
+DROP TABLE IF EXISTS partners;
+DROP TABLE IF EXISTS majorities;
+DROP TABLE IF EXISTS schools;
