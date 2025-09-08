@@ -1,6 +1,7 @@
 package rbac
 
 import (
+	"backend-service-internpro/internal/pkg/response"
 	"time"
 
 	"github.com/google/uuid"
@@ -79,16 +80,15 @@ type RBACMetadata struct {
 }
 
 // Role Request/Response DTOs
-type RoleListResponse struct {
+type RoleListData struct {
 	Data []Role       `json:"data"`
 	Meta RBACMetadata `json:"meta"`
 }
 
+type RoleListResponse = response.ApiResponse
+
 // PaginatedRolesResponse represents paginated roles response for Huma
-type PaginatedRolesResponse struct {
-	Data []Role       `json:"data" doc:"List of roles"`
-	Meta RBACMetadata `json:"meta" doc:"Pagination metadata"`
-}
+type PaginatedRolesResponse = response.ApiResponse
 
 // RoleQueryParams represents query parameters for role listing
 type RoleQueryParams struct {
@@ -97,9 +97,7 @@ type RoleQueryParams struct {
 	Search string `json:"search" doc:"Search by name or slug"`
 }
 
-type RoleResponse struct {
-	Role
-}
+type RoleResponse = response.ApiResponse
 
 type CreateRoleRequest struct {
 	Name        string `json:"name" form:"name" minLength:"1" maxLength:"100" doc:"Role name"`
@@ -115,10 +113,11 @@ type UpdateRoleRequest struct {
 	IsActive    *bool   `json:"is_active" form:"is_active" doc:"Role active status"`
 }
 
-type CreateRoleResponse struct {
-	ID      uuid.UUID `json:"id" doc:"Created role ID"`
-	Message string    `json:"message" doc:"Success message"`
+type CreateRoleData struct {
+	ID uuid.UUID `json:"id" doc:"Created role ID"`
 }
+
+type CreateRoleResponse = response.ApiResponse
 
 type AssignRolePermissionsRequest struct {
 	PermissionIDs []uuid.UUID `json:"permission_ids" doc:"List of permission IDs to assign"`
@@ -135,16 +134,15 @@ type AssignRoleToUserRequest struct {
 }
 
 // Permission Request/Response DTOs
-type PermissionListResponse struct {
+type PermissionListData struct {
 	Data []Permission `json:"data"`
 	Meta RBACMetadata `json:"meta"`
 }
 
+type PermissionListResponse = response.ApiResponse
+
 // PaginatedPermissionsResponse represents paginated permissions response for Huma
-type PaginatedPermissionsResponse struct {
-	Data []Permission `json:"data" doc:"List of permissions"`
-	Meta RBACMetadata `json:"meta" doc:"Pagination metadata"`
-}
+type PaginatedPermissionsResponse = response.ApiResponse
 
 // PermissionQueryParams represents query parameters for permission listing
 type PermissionQueryParams struct {
@@ -153,9 +151,7 @@ type PermissionQueryParams struct {
 	Search string `json:"search" doc:"Search by name, resource, or action"`
 }
 
-type PermissionResponse struct {
-	Permission
-}
+type PermissionResponse = response.ApiResponse
 
 type CreatePermissionRequest struct {
 	Name        string `json:"name" form:"name" minLength:"1" maxLength:"100" doc:"Permission name"`
@@ -175,22 +171,22 @@ type UpdatePermissionRequest struct {
 	IsActive    *bool   `json:"is_active" form:"is_active" doc:"Permission active status"`
 }
 
-type CreatePermissionResponse struct {
-	ID      uuid.UUID `json:"id" doc:"Created permission ID"`
-	Message string    `json:"message" doc:"Success message"`
+type CreatePermissionData struct {
+	ID uuid.UUID `json:"id" doc:"Created permission ID"`
 }
 
+type CreatePermissionResponse = response.ApiResponse
+
 // Menu Request/Response DTOs
-type MenuListResponse struct {
+type MenuListData struct {
 	Data []Menu       `json:"data"`
 	Meta RBACMetadata `json:"meta"`
 }
 
+type MenuListResponse = response.ApiResponse
+
 // PaginatedMenusResponse represents paginated menus response for Huma
-type PaginatedMenusResponse struct {
-	Data []Menu       `json:"data" doc:"List of menus"`
-	Meta RBACMetadata `json:"meta" doc:"Pagination metadata"`
-}
+type PaginatedMenusResponse = response.ApiResponse
 
 // MenuQueryParams represents query parameters for menu listing
 type MenuQueryParams struct {
@@ -199,9 +195,7 @@ type MenuQueryParams struct {
 	Search string `json:"search" doc:"Search by name or slug"`
 }
 
-type MenuResponse struct {
-	Menu
-}
+type MenuResponse = response.ApiResponse
 
 type CreateMenuRequest struct {
 	Name      string     `json:"name" form:"name" minLength:"1" maxLength:"100" doc:"Menu name"`
@@ -223,10 +217,11 @@ type UpdateMenuRequest struct {
 	IsActive  *bool      `json:"is_active" form:"is_active" doc:"Menu active status"`
 }
 
-type CreateMenuResponse struct {
-	ID      uuid.UUID `json:"id" doc:"Created menu ID"`
-	Message string    `json:"message" doc:"Success message"`
+type CreateMenuData struct {
+	ID uuid.UUID `json:"id" doc:"Created menu ID"`
 }
+
+type CreateMenuResponse = response.ApiResponse
 
 type AssignRoleMenusRequest struct {
 	MenuPermissions []MenuPermissionRequest `json:"menu_permissions" doc:"List of menu permissions to assign"`
@@ -241,26 +236,36 @@ type MenuPermissionRequest struct {
 }
 
 // User Role Request/Response DTOs
-type UserRoleListResponse struct {
+type UserRoleListData struct {
 	Data []UserRole   `json:"data"`
 	Meta RBACMetadata `json:"meta"`
 }
+
+type UserRoleListResponse = response.ApiResponse
 
 type AssignUserRolesRequest struct {
 	RoleIDs []uuid.UUID `json:"role_ids" doc:"List of role IDs to assign"`
 }
 
-type UserRoleResponse struct {
-	ID      uuid.UUID `json:"id" doc:"Assignment ID"`
-	Message string    `json:"message" doc:"Success message"`
+type UserRoleData struct {
+	ID uuid.UUID `json:"id" doc:"Assignment ID"`
 }
 
+type UserRoleResponse = response.ApiResponse
+
 // Menu Tree Response for hierarchical menu structure
-type MenuTreeResponse struct {
+type MenuTreeData struct {
 	Data []Menu `json:"data"`
 }
 
+type MenuTreeResponse = response.ApiResponse
+
 // User Menu Response with permissions
-type UserMenuResponse struct {
+type UserMenuData struct {
 	Data []RoleMenu `json:"data"`
 }
+
+type UserMenuResponse = response.ApiResponse
+
+// Basic Response for operations that don't return data
+type BasicResponse = response.ApiResponse

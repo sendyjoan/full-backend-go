@@ -4,8 +4,10 @@ import (
 	"context"
 	"net/http"
 
+	"backend-service-internpro/internal/pkg/constants"
 	"backend-service-internpro/internal/pkg/jwt"
 	"backend-service-internpro/internal/pkg/middleware"
+	"backend-service-internpro/internal/pkg/response"
 	"backend-service-internpro/internal/user"
 	"backend-service-internpro/internal/user/service"
 
@@ -45,12 +47,20 @@ func New(api huma.API, svc service.Service, jwtSecrets jwt.Secrets) {
 	}, error) {
 		// Validate token
 		if err := h.validateToken(in.Authorization); err != nil {
-			return nil, err
+			return &struct {
+				Body user.UserListResponse
+			}{
+				Body: *response.Error(constants.TokenInvalid),
+			}, nil
 		}
 
 		resp, err := h.svc.ListUsers(ctx, in.Page, in.Limit)
 		if err != nil {
-			return nil, huma.Error500InternalServerError(err.Error())
+			return &struct {
+				Body user.UserListResponse
+			}{
+				Body: *response.Error(constants.InternalServerError),
+			}, nil
 		}
 
 		return &struct {
@@ -77,12 +87,20 @@ func New(api huma.API, svc service.Service, jwtSecrets jwt.Secrets) {
 	}, error) {
 		// Validate token
 		if err := h.validateToken(in.Authorization); err != nil {
-			return nil, err
+			return &struct {
+				Body user.UserResponse
+			}{
+				Body: *response.Error(constants.TokenInvalid),
+			}, nil
 		}
 
 		resp, err := h.svc.GetUserByID(ctx, in.ID)
 		if err != nil {
-			return nil, huma.Error404NotFound(err.Error())
+			return &struct {
+				Body user.UserResponse
+			}{
+				Body: *response.Error(constants.UserNotFound),
+			}, nil
 		}
 
 		return &struct {
@@ -109,12 +127,20 @@ func New(api huma.API, svc service.Service, jwtSecrets jwt.Secrets) {
 	}, error) {
 		// Validate token
 		if err := h.validateToken(in.Authorization); err != nil {
-			return nil, err
+			return &struct {
+				Body user.CreateUserResponse
+			}{
+				Body: *response.Error(constants.TokenInvalid),
+			}, nil
 		}
 
 		resp, err := h.svc.CreateUser(ctx, in.Body)
 		if err != nil {
-			return nil, huma.Error400BadRequest(err.Error())
+			return &struct {
+				Body user.CreateUserResponse
+			}{
+				Body: *response.Error(constants.UserCreateFailed),
+			}, nil
 		}
 
 		return &struct {
@@ -142,12 +168,20 @@ func New(api huma.API, svc service.Service, jwtSecrets jwt.Secrets) {
 	}, error) {
 		// Validate token
 		if err := h.validateToken(in.Authorization); err != nil {
-			return nil, err
+			return &struct {
+				Body user.UserBasicResponse
+			}{
+				Body: *response.Error(constants.TokenInvalid),
+			}, nil
 		}
 
 		resp, err := h.svc.UpdateUser(ctx, in.ID, in.Body)
 		if err != nil {
-			return nil, huma.Error400BadRequest(err.Error())
+			return &struct {
+				Body user.UserBasicResponse
+			}{
+				Body: *response.Error(constants.UserUpdateFailed),
+			}, nil
 		}
 
 		return &struct {
@@ -174,12 +208,20 @@ func New(api huma.API, svc service.Service, jwtSecrets jwt.Secrets) {
 	}, error) {
 		// Validate token
 		if err := h.validateToken(in.Authorization); err != nil {
-			return nil, err
+			return &struct {
+				Body user.UserBasicResponse
+			}{
+				Body: *response.Error(constants.TokenInvalid),
+			}, nil
 		}
 
 		resp, err := h.svc.DeleteUser(ctx, in.ID)
 		if err != nil {
-			return nil, huma.Error404NotFound(err.Error())
+			return &struct {
+				Body user.UserBasicResponse
+			}{
+				Body: *response.Error(constants.UserDeleteFailed),
+			}, nil
 		}
 
 		return &struct {

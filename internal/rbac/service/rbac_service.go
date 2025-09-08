@@ -7,6 +7,7 @@ import (
 	"math"
 	"time"
 
+	"backend-service-internpro/internal/pkg/response"
 	"backend-service-internpro/internal/rbac"
 	"backend-service-internpro/internal/rbac/repository"
 
@@ -46,10 +47,9 @@ func (s *service) CreateRole(ctx context.Context, req *rbac.CreateRoleRequest, c
 		return nil, fmt.Errorf("failed to create role: %w", err)
 	}
 
-	return &rbac.CreateRoleResponse{
-		ID:      role.ID,
-		Message: "Role created successfully",
-	}, nil
+	return response.Success("Role created successfully", rbac.CreateRoleData{
+		ID: role.ID,
+	}), nil
 }
 
 func (s *service) GetRoleByID(ctx context.Context, id uuid.UUID) (*rbac.RoleResponse, error) {
@@ -61,9 +61,7 @@ func (s *service) GetRoleByID(ctx context.Context, id uuid.UUID) (*rbac.RoleResp
 		return nil, errors.New("role not found")
 	}
 
-	return &rbac.RoleResponse{
-		Role: role.ToRole(),
-	}, nil
+	return response.Success("Role retrieved successfully", role.ToRole()), nil
 }
 
 func (s *service) GetRoles(ctx context.Context, page, limit int, search string) (*rbac.RoleListResponse, error) {
@@ -86,7 +84,7 @@ func (s *service) GetRoles(ctx context.Context, page, limit int, search string) 
 
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
 
-	return &rbac.RoleListResponse{
+	data := rbac.RoleListData{
 		Data: roleList,
 		Meta: rbac.RBACMetadata{
 			Page:       page,
@@ -94,7 +92,9 @@ func (s *service) GetRoles(ctx context.Context, page, limit int, search string) 
 			TotalPages: totalPages,
 			TotalItems: int(total),
 		},
-	}, nil
+	}
+
+	return response.Success("Roles retrieved successfully", data), nil
 }
 
 func (s *service) UpdateRole(ctx context.Context, id uuid.UUID, req *rbac.UpdateRoleRequest, updatedBy uuid.UUID) error {
@@ -163,9 +163,7 @@ func (s *service) GetRoleWithPermissions(ctx context.Context, id uuid.UUID) (*rb
 		return nil, errors.New("role not found")
 	}
 
-	return &rbac.RoleResponse{
-		Role: role.ToRole(),
-	}, nil
+	return response.Success("Role with permissions retrieved successfully", role.ToRole()), nil
 }
 
 func (s *service) GetRoleWithMenus(ctx context.Context, id uuid.UUID) (*rbac.RoleResponse, error) {
@@ -177,9 +175,7 @@ func (s *service) GetRoleWithMenus(ctx context.Context, id uuid.UUID) (*rbac.Rol
 		return nil, errors.New("role not found")
 	}
 
-	return &rbac.RoleResponse{
-		Role: role.ToRole(),
-	}, nil
+	return response.Success("Role with menus retrieved successfully", role.ToRole()), nil
 }
 
 func (s *service) AssignPermissionsToRole(ctx context.Context, roleID uuid.UUID, req *rbac.AssignRolePermissionsRequest, assignedBy uuid.UUID) error {
@@ -275,10 +271,9 @@ func (s *service) CreatePermission(ctx context.Context, req *rbac.CreatePermissi
 		return nil, fmt.Errorf("failed to create permission: %w", err)
 	}
 
-	return &rbac.CreatePermissionResponse{
-		ID:      permission.ID,
-		Message: "Permission created successfully",
-	}, nil
+	return response.Success("Permission created successfully", rbac.CreatePermissionData{
+		ID: permission.ID,
+	}), nil
 }
 
 func (s *service) GetPermissionByID(ctx context.Context, id uuid.UUID) (*rbac.PermissionResponse, error) {
@@ -290,9 +285,7 @@ func (s *service) GetPermissionByID(ctx context.Context, id uuid.UUID) (*rbac.Pe
 		return nil, errors.New("permission not found")
 	}
 
-	return &rbac.PermissionResponse{
-		Permission: permission.ToPermission(),
-	}, nil
+	return response.Success("Permission retrieved successfully", permission.ToPermission()), nil
 }
 
 func (s *service) GetPermissions(ctx context.Context, page, limit int, search string) (*rbac.PermissionListResponse, error) {
@@ -315,7 +308,7 @@ func (s *service) GetPermissions(ctx context.Context, page, limit int, search st
 
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
 
-	return &rbac.PermissionListResponse{
+	data := rbac.PermissionListData{
 		Data: permissionList,
 		Meta: rbac.RBACMetadata{
 			Page:       page,
@@ -323,7 +316,9 @@ func (s *service) GetPermissions(ctx context.Context, page, limit int, search st
 			TotalPages: totalPages,
 			TotalItems: int(total),
 		},
-	}, nil
+	}
+
+	return response.Success("Permissions retrieved successfully", data), nil
 }
 
 func (s *service) UpdatePermission(ctx context.Context, id uuid.UUID, req *rbac.UpdatePermissionRequest, updatedBy uuid.UUID) error {
@@ -400,7 +395,7 @@ func (s *service) GetPermissionsByResource(ctx context.Context, resource string)
 		permissionList = append(permissionList, permission.ToPermission())
 	}
 
-	return &rbac.PermissionListResponse{
+	data := rbac.PermissionListData{
 		Data: permissionList,
 		Meta: rbac.RBACMetadata{
 			Page:       1,
@@ -408,7 +403,9 @@ func (s *service) GetPermissionsByResource(ctx context.Context, resource string)
 			TotalPages: 1,
 			TotalItems: len(permissionList),
 		},
-	}, nil
+	}
+
+	return response.Success("Permissions by resource retrieved successfully", data), nil
 }
 
 // Menu services
@@ -452,10 +449,9 @@ func (s *service) CreateMenu(ctx context.Context, req *rbac.CreateMenuRequest, c
 		return nil, fmt.Errorf("failed to create menu: %w", err)
 	}
 
-	return &rbac.CreateMenuResponse{
-		ID:      menu.ID,
-		Message: "Menu created successfully",
-	}, nil
+	return response.Success("Menu created successfully", rbac.CreateMenuData{
+		ID: menu.ID,
+	}), nil
 }
 
 func (s *service) GetMenuByID(ctx context.Context, id uuid.UUID) (*rbac.MenuResponse, error) {
@@ -467,9 +463,7 @@ func (s *service) GetMenuByID(ctx context.Context, id uuid.UUID) (*rbac.MenuResp
 		return nil, errors.New("menu not found")
 	}
 
-	return &rbac.MenuResponse{
-		Menu: menu.ToMenu(),
-	}, nil
+	return response.Success("Menu retrieved successfully", menu.ToMenu()), nil
 }
 
 func (s *service) GetMenus(ctx context.Context, page, limit int, search string) (*rbac.MenuListResponse, error) {
@@ -492,7 +486,7 @@ func (s *service) GetMenus(ctx context.Context, page, limit int, search string) 
 
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
 
-	return &rbac.MenuListResponse{
+	data := rbac.MenuListData{
 		Data: menuList,
 		Meta: rbac.RBACMetadata{
 			Page:       page,
@@ -500,7 +494,9 @@ func (s *service) GetMenus(ctx context.Context, page, limit int, search string) 
 			TotalPages: totalPages,
 			TotalItems: int(total),
 		},
-	}, nil
+	}
+
+	return response.Success("Menus retrieved successfully", data), nil
 }
 
 func (s *service) GetMenuTree(ctx context.Context) (*rbac.MenuTreeResponse, error) {
@@ -615,10 +611,9 @@ func (s *service) AssignRolesToUser(ctx context.Context, userID uuid.UUID, req *
 		return nil, fmt.Errorf("failed to assign roles to user: %w", err)
 	}
 
-	return &rbac.UserRoleResponse{
-		ID:      uuid.New(),
-		Message: "Roles assigned to user successfully",
-	}, nil
+	return response.Success("Roles assigned to user successfully", rbac.UserRoleData{
+		ID: uuid.New(),
+	}), nil
 }
 
 func (s *service) GetUserRoles(ctx context.Context, userID uuid.UUID) (*rbac.UserRoleListResponse, error) {
@@ -638,7 +633,7 @@ func (s *service) GetUserRoles(ctx context.Context, userID uuid.UUID) (*rbac.Use
 		})
 	}
 
-	return &rbac.UserRoleListResponse{
+	data := rbac.UserRoleListData{
 		Data: roleList,
 		Meta: rbac.RBACMetadata{
 			Page:       1,
@@ -646,7 +641,9 @@ func (s *service) GetUserRoles(ctx context.Context, userID uuid.UUID) (*rbac.Use
 			TotalPages: 1,
 			TotalItems: len(roleList),
 		},
-	}, nil
+	}
+
+	return response.Success("User roles retrieved successfully", data), nil
 }
 
 func (s *service) RemoveRolesFromUser(ctx context.Context, userID uuid.UUID, roleIDs []uuid.UUID) error {
@@ -677,7 +674,7 @@ func (s *service) GetUserPermissions(ctx context.Context, userID uuid.UUID) (*rb
 		permissionList = append(permissionList, permission.ToPermission())
 	}
 
-	return &rbac.PermissionListResponse{
+	data := rbac.PermissionListData{
 		Data: permissionList,
 		Meta: rbac.RBACMetadata{
 			Page:       1,
@@ -685,7 +682,9 @@ func (s *service) GetUserPermissions(ctx context.Context, userID uuid.UUID) (*rb
 			TotalPages: 1,
 			TotalItems: len(permissionList),
 		},
-	}, nil
+	}
+
+	return response.Success("User permissions retrieved successfully", data), nil
 }
 
 func (s *service) GetUserMenus(ctx context.Context, userID uuid.UUID) (*rbac.UserMenuResponse, error) {

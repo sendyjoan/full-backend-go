@@ -6,6 +6,8 @@ import (
 	"math"
 	"time"
 
+	"backend-service-internpro/internal/pkg/constants"
+	"backend-service-internpro/internal/pkg/response"
 	"backend-service-internpro/internal/user"
 	"backend-service-internpro/internal/user/repository"
 
@@ -65,10 +67,11 @@ func (s *service) CreateUser(ctx context.Context, req user.CreateUserRequest) (*
 		return nil, errors.New("failed to create user")
 	}
 
-	return &user.CreateUserResponse{
-		ID:      userEntity.ID,
-		Message: "User created successfully",
-	}, nil
+	createData := user.CreateUserData{
+		ID: userEntity.ID,
+	}
+
+	return response.Success(constants.UserCreateSuccess, createData), nil
 }
 
 func (s *service) GetUserByID(ctx context.Context, id string) (*user.UserResponse, error) {
@@ -85,9 +88,7 @@ func (s *service) GetUserByID(ctx context.Context, id string) (*user.UserRespons
 		return nil, errors.New("failed to get user")
 	}
 
-	return &user.UserResponse{
-		User: userEntity.ToUser(),
-	}, nil
+	return response.Success(constants.UserDetailSuccess, userEntity.ToUser()), nil
 }
 
 func (s *service) UpdateUser(ctx context.Context, id string, req user.UpdateUserRequest) (*user.UserBasicResponse, error) {
@@ -124,9 +125,7 @@ func (s *service) UpdateUser(ctx context.Context, id string, req user.UpdateUser
 		return nil, errors.New("failed to update user")
 	}
 
-	return &user.UserBasicResponse{
-		Message: "User updated successfully",
-	}, nil
+	return response.SuccessWithoutData(constants.UserUpdateSuccess), nil
 }
 
 func (s *service) DeleteUser(ctx context.Context, id string) (*user.UserBasicResponse, error) {
@@ -149,9 +148,7 @@ func (s *service) DeleteUser(ctx context.Context, id string) (*user.UserBasicRes
 		return nil, errors.New("failed to delete user")
 	}
 
-	return &user.UserBasicResponse{
-		Message: "User deleted successfully",
-	}, nil
+	return response.SuccessWithoutData(constants.UserDeleteSuccess), nil
 }
 
 func (s *service) ListUsers(ctx context.Context, page, limit int) (*user.UserListResponse, error) {
@@ -170,13 +167,15 @@ func (s *service) ListUsers(ctx context.Context, page, limit int) (*user.UserLis
 
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
 
-	return &user.UserListResponse{
-		Data: users,
+	listData := user.UserListData{
+		Users: users,
 		Meta: user.Metadata{
 			Page:       page,
 			Limit:      limit,
 			TotalPages: totalPages,
 			TotalItems: int(total),
 		},
-	}, nil
+	}
+
+	return response.Success(constants.UserListSuccess, listData), nil
 }

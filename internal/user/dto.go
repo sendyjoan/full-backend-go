@@ -1,6 +1,7 @@
 package user
 
 import (
+	"backend-service-internpro/internal/pkg/response"
 	"time"
 
 	"github.com/google/uuid"
@@ -21,17 +22,6 @@ type User struct {
 	UpdatedAt  time.Time  `json:"updated_at" doc:"User last update date"`
 }
 
-// UserListResponse represents the response for user list
-type UserListResponse struct {
-	Data []User   `json:"data"`
-	Meta Metadata `json:"meta"`
-}
-
-// UserResponse represents a single user response
-type UserResponse struct {
-	User
-}
-
 // Metadata represents pagination metadata
 type Metadata struct {
 	Page       int `json:"page"`
@@ -39,6 +29,18 @@ type Metadata struct {
 	TotalPages int `json:"total_pages"`
 	TotalItems int `json:"total_items"`
 }
+
+// UserListData represents the data structure for user list
+type UserListData struct {
+	Users []User   `json:"users"`
+	Meta  Metadata `json:"meta"`
+}
+
+// UserListResponse represents the response for user list
+type UserListResponse = response.ApiResponse
+
+// UserResponse represents a single user response
+type UserResponse = response.ApiResponse
 
 // CreateUserRequest represents request to create a new user
 type CreateUserRequest struct {
@@ -54,10 +56,7 @@ type CreateUserRequest struct {
 }
 
 // CreateUserResponse represents response after creating a user
-type CreateUserResponse struct {
-	ID      uuid.UUID `json:"id" doc:"Created user ID"`
-	Message string    `json:"message" doc:"Success message"`
-}
+type CreateUserResponse = response.ApiResponse
 
 // UpdateUserRequest represents request to update user
 type UpdateUserRequest struct {
@@ -66,6 +65,9 @@ type UpdateUserRequest struct {
 }
 
 // UserBasicResponse represents a basic response with message for user operations
-type UserBasicResponse struct {
-	Message string `json:"message" doc:"Success message"`
+type UserBasicResponse = response.ApiResponse
+
+// CreateUserData represents the data structure for user creation response
+type CreateUserData struct {
+	ID uuid.UUID `json:"id" doc:"Created user ID"`
 }

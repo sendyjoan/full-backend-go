@@ -8,38 +8,40 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
+	"backend-service-internpro/internal/pkg/constants"
+	"backend-service-internpro/internal/pkg/response"
 	"backend-service-internpro/internal/school"
 	"backend-service-internpro/internal/school/repository"
 )
 
 // SchoolService defines the interface for school service
 type SchoolService interface {
-	CreateSchool(ctx context.Context, req school.CreateSchoolRequest) (*school.School, error)
-	GetSchoolByID(ctx context.Context, id uuid.UUID) (*school.School, error)
+	CreateSchool(ctx context.Context, req school.CreateSchoolRequest) (*school.SchoolResponse, error)
+	GetSchoolByID(ctx context.Context, id uuid.UUID) (*school.SchoolResponse, error)
 	GetAllSchools(ctx context.Context, params school.QueryParams) (*school.PaginatedSchoolsResponse, error)
-	UpdateSchool(ctx context.Context, id uuid.UUID, req school.UpdateSchoolRequest) (*school.School, error)
-	DeleteSchool(ctx context.Context, id uuid.UUID) error
+	UpdateSchool(ctx context.Context, id uuid.UUID, req school.UpdateSchoolRequest) (*school.SchoolResponse, error)
+	DeleteSchool(ctx context.Context, id uuid.UUID) (*school.BasicResponse, error)
 
 	// Majority methods
-	CreateMajority(ctx context.Context, req school.CreateMajorityRequest) (*school.Majority, error)
-	GetMajorityByID(ctx context.Context, id uuid.UUID) (*school.Majority, error)
+	CreateMajority(ctx context.Context, req school.CreateMajorityRequest) (*school.MajorityResponse, error)
+	GetMajorityByID(ctx context.Context, id uuid.UUID) (*school.MajorityResponse, error)
 	GetAllMajorities(ctx context.Context, params school.QueryParams) (*school.PaginatedMajoritiesResponse, error)
-	UpdateMajority(ctx context.Context, id uuid.UUID, req school.UpdateMajorityRequest) (*school.Majority, error)
-	DeleteMajority(ctx context.Context, id uuid.UUID) error
+	UpdateMajority(ctx context.Context, id uuid.UUID, req school.UpdateMajorityRequest) (*school.MajorityResponse, error)
+	DeleteMajority(ctx context.Context, id uuid.UUID) (*school.BasicResponse, error)
 
 	// Class methods
-	CreateClass(ctx context.Context, req school.CreateClassRequest) (*school.Class, error)
-	GetClassByID(ctx context.Context, id uuid.UUID) (*school.Class, error)
+	CreateClass(ctx context.Context, req school.CreateClassRequest) (*school.ClassResponse, error)
+	GetClassByID(ctx context.Context, id uuid.UUID) (*school.ClassResponse, error)
 	GetAllClasses(ctx context.Context, params school.QueryParams) (*school.PaginatedClassesResponse, error)
-	UpdateClass(ctx context.Context, id uuid.UUID, req school.UpdateClassRequest) (*school.Class, error)
-	DeleteClass(ctx context.Context, id uuid.UUID) error
+	UpdateClass(ctx context.Context, id uuid.UUID, req school.UpdateClassRequest) (*school.ClassResponse, error)
+	DeleteClass(ctx context.Context, id uuid.UUID) (*school.BasicResponse, error)
 
 	// Partner methods
-	CreatePartner(ctx context.Context, req school.CreatePartnerRequest) (*school.Partner, error)
-	GetPartnerByID(ctx context.Context, id uuid.UUID) (*school.Partner, error)
+	CreatePartner(ctx context.Context, req school.CreatePartnerRequest) (*school.PartnerResponse, error)
+	GetPartnerByID(ctx context.Context, id uuid.UUID) (*school.PartnerResponse, error)
 	GetAllPartners(ctx context.Context, params school.QueryParams) (*school.PaginatedPartnersResponse, error)
-	UpdatePartner(ctx context.Context, id uuid.UUID, req school.UpdatePartnerRequest) (*school.Partner, error)
-	DeletePartner(ctx context.Context, id uuid.UUID) error
+	UpdatePartner(ctx context.Context, id uuid.UUID, req school.UpdatePartnerRequest) (*school.PartnerResponse, error)
+	DeletePartner(ctx context.Context, id uuid.UUID) (*school.BasicResponse, error)
 }
 
 // schoolService implements SchoolService
@@ -55,7 +57,7 @@ func NewSchoolService(repo repository.SchoolRepository) SchoolService {
 }
 
 // School methods
-func (s *schoolService) CreateSchool(ctx context.Context, req school.CreateSchoolRequest) (*school.School, error) {
+func (s *schoolService) CreateSchool(ctx context.Context, req school.CreateSchoolRequest) (*school.SchoolResponse, error) {
 	entity := &school.SchoolEntity{
 		ID:        uuid.New(),
 		Name:      req.Name,
@@ -84,10 +86,10 @@ func (s *schoolService) CreateSchool(ctx context.Context, req school.CreateSchoo
 	}
 
 	result := entity.ToSchool()
-	return &result, nil
+	return response.Success(constants.SchoolCreateSuccess, result), nil
 }
 
-func (s *schoolService) GetSchoolByID(ctx context.Context, id uuid.UUID) (*school.School, error) {
+func (s *schoolService) GetSchoolByID(ctx context.Context, id uuid.UUID) (*school.SchoolResponse, error) {
 	entity, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -97,7 +99,7 @@ func (s *schoolService) GetSchoolByID(ctx context.Context, id uuid.UUID) (*schoo
 	}
 
 	result := entity.ToSchool()
-	return &result, nil
+	return response.Success(constants.SchoolDetailSuccess, result), nil
 }
 
 func (s *schoolService) GetAllSchools(ctx context.Context, params school.QueryParams) (*school.PaginatedSchoolsResponse, error) {
@@ -121,7 +123,7 @@ func (s *schoolService) GetAllSchools(ctx context.Context, params school.QueryPa
 
 	totalPages := (total + params.Limit - 1) / params.Limit
 
-	return &school.PaginatedSchoolsResponse{
+	data := school.SchoolListData{
 		Schools: schools,
 		Pagination: school.PaginationResult{
 			Page:       params.Page,
@@ -129,10 +131,12 @@ func (s *schoolService) GetAllSchools(ctx context.Context, params school.QueryPa
 			Total:      total,
 			TotalPages: totalPages,
 		},
-	}, nil
+	}
+
+	return response.Success(constants.SchoolListSuccess, data), nil
 }
 
-func (s *schoolService) UpdateSchool(ctx context.Context, id uuid.UUID, req school.UpdateSchoolRequest) (*school.School, error) {
+func (s *schoolService) UpdateSchool(ctx context.Context, id uuid.UUID, req school.UpdateSchoolRequest) (*school.SchoolResponse, error) {
 	entity, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -149,7 +153,7 @@ func (s *schoolService) UpdateSchool(ctx context.Context, id uuid.UUID, req scho
 		entity.Address = &req.Address
 	}
 	if req.Domain != "" {
-		// Check if domain already exists (excluding current record)
+		// Check if domain already exists and belongs to different school
 		existing, err := s.repo.GetByDomain(ctx, req.Domain)
 		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, err
@@ -167,23 +171,27 @@ func (s *schoolService) UpdateSchool(ctx context.Context, id uuid.UUID, req scho
 	}
 
 	result := entity.ToSchool()
-	return &result, nil
+	return response.Success(constants.SchoolUpdateSuccess, result), nil
 }
 
-func (s *schoolService) DeleteSchool(ctx context.Context, id uuid.UUID) error {
+func (s *schoolService) DeleteSchool(ctx context.Context, id uuid.UUID) (*school.BasicResponse, error) {
 	_, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return errors.New("school not found")
+			return nil, errors.New("school not found")
 		}
-		return err
+		return nil, err
 	}
 
-	return s.repo.Delete(ctx, id)
+	if err := s.repo.Delete(ctx, id); err != nil {
+		return nil, err
+	}
+
+	return response.SuccessWithoutData(constants.SchoolDeleteSuccess), nil
 }
 
 // Majority methods
-func (s *schoolService) CreateMajority(ctx context.Context, req school.CreateMajorityRequest) (*school.Majority, error) {
+func (s *schoolService) CreateMajority(ctx context.Context, req school.CreateMajorityRequest) (*school.MajorityResponse, error) {
 	// Verify school exists
 	_, err := s.repo.GetByID(ctx, req.SchoolID)
 	if err != nil {
@@ -210,10 +218,10 @@ func (s *schoolService) CreateMajority(ctx context.Context, req school.CreateMaj
 	}
 
 	result := entity.ToMajority()
-	return &result, nil
+	return response.Success(constants.MajorityCreateSuccess, result), nil
 }
 
-func (s *schoolService) GetMajorityByID(ctx context.Context, id uuid.UUID) (*school.Majority, error) {
+func (s *schoolService) GetMajorityByID(ctx context.Context, id uuid.UUID) (*school.MajorityResponse, error) {
 	entity, err := s.repo.GetMajorityByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -227,7 +235,7 @@ func (s *schoolService) GetMajorityByID(ctx context.Context, id uuid.UUID) (*sch
 		schoolDTO := entity.School.ToSchool()
 		result.School = &schoolDTO
 	}
-	return &result, nil
+	return response.Success(constants.MajorityDetailSuccess, result), nil
 }
 
 func (s *schoolService) GetAllMajorities(ctx context.Context, params school.QueryParams) (*school.PaginatedMajoritiesResponse, error) {
@@ -255,7 +263,7 @@ func (s *schoolService) GetAllMajorities(ctx context.Context, params school.Quer
 
 	totalPages := (total + params.Limit - 1) / params.Limit
 
-	return &school.PaginatedMajoritiesResponse{
+	data := school.MajorityListData{
 		Majorities: majorities,
 		Pagination: school.PaginationResult{
 			Page:       params.Page,
@@ -263,10 +271,12 @@ func (s *schoolService) GetAllMajorities(ctx context.Context, params school.Quer
 			Total:      total,
 			TotalPages: totalPages,
 		},
-	}, nil
+	}
+
+	return response.Success(constants.MajorityListSuccess, data), nil
 }
 
-func (s *schoolService) UpdateMajority(ctx context.Context, id uuid.UUID, req school.UpdateMajorityRequest) (*school.Majority, error) {
+func (s *schoolService) UpdateMajority(ctx context.Context, id uuid.UUID, req school.UpdateMajorityRequest) (*school.MajorityResponse, error) {
 	entity, err := s.repo.GetMajorityByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -301,23 +311,27 @@ func (s *schoolService) UpdateMajority(ctx context.Context, id uuid.UUID, req sc
 	}
 
 	result := entity.ToMajority()
-	return &result, nil
+	return response.Success(constants.MajorityUpdateSuccess, result), nil
 }
 
-func (s *schoolService) DeleteMajority(ctx context.Context, id uuid.UUID) error {
+func (s *schoolService) DeleteMajority(ctx context.Context, id uuid.UUID) (*school.BasicResponse, error) {
 	_, err := s.repo.GetMajorityByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return errors.New("majority not found")
+			return nil, errors.New("majority not found")
 		}
-		return err
+		return nil, err
 	}
 
-	return s.repo.DeleteMajority(ctx, id)
+	if err := s.repo.DeleteMajority(ctx, id); err != nil {
+		return nil, err
+	}
+
+	return response.SuccessWithoutData(constants.MajorityDeleteSuccess), nil
 }
 
 // Class methods
-func (s *schoolService) CreateClass(ctx context.Context, req school.CreateClassRequest) (*school.Class, error) {
+func (s *schoolService) CreateClass(ctx context.Context, req school.CreateClassRequest) (*school.ClassResponse, error) {
 	// Verify school exists
 	_, err := s.repo.GetByID(ctx, req.SchoolID)
 	if err != nil {
@@ -354,10 +368,10 @@ func (s *schoolService) CreateClass(ctx context.Context, req school.CreateClassR
 	}
 
 	result := entity.ToClass()
-	return &result, nil
+	return response.Success(constants.ClassCreateSuccess, result), nil
 }
 
-func (s *schoolService) GetClassByID(ctx context.Context, id uuid.UUID) (*school.Class, error) {
+func (s *schoolService) GetClassByID(ctx context.Context, id uuid.UUID) (*school.ClassResponse, error) {
 	entity, err := s.repo.GetClassByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -375,7 +389,7 @@ func (s *schoolService) GetClassByID(ctx context.Context, id uuid.UUID) (*school
 		majorityDTO := entity.Majority.ToMajority()
 		result.Majority = &majorityDTO
 	}
-	return &result, nil
+	return response.Success(constants.ClassGetSuccess, result), nil
 }
 
 func (s *schoolService) GetAllClasses(ctx context.Context, params school.QueryParams) (*school.PaginatedClassesResponse, error) {
@@ -407,7 +421,7 @@ func (s *schoolService) GetAllClasses(ctx context.Context, params school.QueryPa
 
 	totalPages := (total + params.Limit - 1) / params.Limit
 
-	return &school.PaginatedClassesResponse{
+	data := school.ClassListData{
 		Classes: classes,
 		Pagination: school.PaginationResult{
 			Page:       params.Page,
@@ -415,10 +429,12 @@ func (s *schoolService) GetAllClasses(ctx context.Context, params school.QueryPa
 			Total:      total,
 			TotalPages: totalPages,
 		},
-	}, nil
+	}
+
+	return response.Success(constants.ClassGetAllSuccess, data), nil
 }
 
-func (s *schoolService) UpdateClass(ctx context.Context, id uuid.UUID, req school.UpdateClassRequest) (*school.Class, error) {
+func (s *schoolService) UpdateClass(ctx context.Context, id uuid.UUID, req school.UpdateClassRequest) (*school.ClassResponse, error) {
 	entity, err := s.repo.GetClassByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -464,23 +480,27 @@ func (s *schoolService) UpdateClass(ctx context.Context, id uuid.UUID, req schoo
 	}
 
 	result := entity.ToClass()
-	return &result, nil
+	return response.Success(constants.ClassUpdateSuccess, result), nil
 }
 
-func (s *schoolService) DeleteClass(ctx context.Context, id uuid.UUID) error {
+func (s *schoolService) DeleteClass(ctx context.Context, id uuid.UUID) (*school.BasicResponse, error) {
 	_, err := s.repo.GetClassByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return errors.New("class not found")
+			return nil, errors.New("class not found")
 		}
-		return err
+		return nil, err
 	}
 
-	return s.repo.DeleteClass(ctx, id)
+	if err := s.repo.DeleteClass(ctx, id); err != nil {
+		return nil, err
+	}
+
+	return response.SuccessWithoutData(constants.ClassDeleteSuccess), nil
 }
 
 // Partner methods
-func (s *schoolService) CreatePartner(ctx context.Context, req school.CreatePartnerRequest) (*school.Partner, error) {
+func (s *schoolService) CreatePartner(ctx context.Context, req school.CreatePartnerRequest) (*school.PartnerResponse, error) {
 	// Verify school exists
 	_, err := s.repo.GetByID(ctx, req.SchoolID)
 	if err != nil {
@@ -522,10 +542,10 @@ func (s *schoolService) CreatePartner(ctx context.Context, req school.CreatePart
 	}
 
 	result := entity.ToPartner()
-	return &result, nil
+	return response.Success(constants.PartnerCreateSuccess, result), nil
 }
 
-func (s *schoolService) GetPartnerByID(ctx context.Context, id uuid.UUID) (*school.Partner, error) {
+func (s *schoolService) GetPartnerByID(ctx context.Context, id uuid.UUID) (*school.PartnerResponse, error) {
 	entity, err := s.repo.GetPartnerByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -539,7 +559,7 @@ func (s *schoolService) GetPartnerByID(ctx context.Context, id uuid.UUID) (*scho
 		schoolDTO := entity.School.ToSchool()
 		result.School = &schoolDTO
 	}
-	return &result, nil
+	return response.Success(constants.PartnerGetSuccess, result), nil
 }
 
 func (s *schoolService) GetAllPartners(ctx context.Context, params school.QueryParams) (*school.PaginatedPartnersResponse, error) {
@@ -567,7 +587,7 @@ func (s *schoolService) GetAllPartners(ctx context.Context, params school.QueryP
 
 	totalPages := (total + params.Limit - 1) / params.Limit
 
-	return &school.PaginatedPartnersResponse{
+	data := school.PartnerListData{
 		Partners: partners,
 		Pagination: school.PaginationResult{
 			Page:       params.Page,
@@ -575,10 +595,12 @@ func (s *schoolService) GetAllPartners(ctx context.Context, params school.QueryP
 			Total:      total,
 			TotalPages: totalPages,
 		},
-	}, nil
+	}
+
+	return response.Success(constants.PartnerGetAllSuccess, data), nil
 }
 
-func (s *schoolService) UpdatePartner(ctx context.Context, id uuid.UUID, req school.UpdatePartnerRequest) (*school.Partner, error) {
+func (s *schoolService) UpdatePartner(ctx context.Context, id uuid.UUID, req school.UpdatePartnerRequest) (*school.PartnerResponse, error) {
 	entity, err := s.repo.GetPartnerByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -628,17 +650,21 @@ func (s *schoolService) UpdatePartner(ctx context.Context, id uuid.UUID, req sch
 	}
 
 	result := entity.ToPartner()
-	return &result, nil
+	return response.Success(constants.PartnerUpdateSuccess, result), nil
 }
 
-func (s *schoolService) DeletePartner(ctx context.Context, id uuid.UUID) error {
+func (s *schoolService) DeletePartner(ctx context.Context, id uuid.UUID) (*school.BasicResponse, error) {
 	_, err := s.repo.GetPartnerByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return errors.New("partner not found")
+			return nil, errors.New("partner not found")
 		}
-		return err
+		return nil, err
 	}
 
-	return s.repo.DeletePartner(ctx, id)
+	if err := s.repo.DeletePartner(ctx, id); err != nil {
+		return nil, err
+	}
+
+	return response.SuccessWithoutData(constants.PartnerDeleteSuccess), nil
 }

@@ -13,34 +13,65 @@ func CORSMiddleware() gin.HandlerFunc {
 	return gin.HandlerFunc(func(c *gin.Context) {
 		origin := c.Request.Header.Get("Origin")
 
-		// Allow specific origins or localhost for development
-		allowedOrigins := map[string]bool{
-			"http://localhost:8080":    true,
-			"https://localhost:8080":   true,
-			"http://localhost:8000":    true,
-			"https://localhost:8000":   true,
-			"http://127.0.0.1:8080":    true,
-			"https://127.0.0.1:8080":   true,
-			"http://127.0.0.1:8000":    true,
-			"https://127.0.0.1:8000":   true,
-			"https://unpkg.com":        true,
-			"https://cdn.jsdelivr.net": true,
-		}
+		// Get environment mode
+		ginMode := gin.Mode()
 
-		// For development, allow any localhost origin
-		if origin == "" || allowedOrigins[origin] {
+		// In development mode, allow all origins
+		// In production, be more restrictive
+		if ginMode == gin.DebugMode || ginMode == gin.TestMode {
+			// Development: Allow all origins
+			if origin != "" {
+				c.Header("Access-Control-Allow-Origin", origin)
+			} else {
+				c.Header("Access-Control-Allow-Origin", "*")
+			}
+		} else {
+			// Production: Allow specific origins
+			allowedOrigins := map[string]bool{
+				"https://schooltechindonesia.com":             true,
+				"https://www.schooltechindonesia.com":         true,
+				"https://api.schooltechindonesia.com":         true,
+				"https://staging-api.schooltechindonesia.com": true,
+				"https://testing-api.schooltechindonesia.com": true,
+				"http://localhost:3000":                       true,
+				"http://localhost:3001":                       true,
+				"http://localhost:8080":                       true,
+				"http://localhost:8000":                       true,
+				"https://localhost:3000":                      true,
+				"https://localhost:3001":                      true,
+				"https://localhost:8080":                      true,
+				"https://localhost:8000":                      true,
+				"http://127.0.0.1:3000":                       true,
+				"http://127.0.0.1:3001":                       true,
+				"http://127.0.0.1:8080":                       true,
+				"http://127.0.0.1:8000":                       true,
+				"https://127.0.0.1:3000":                      true,
+				"https://127.0.0.1:3001":                      true,
+				"https://127.0.0.1:8080":                      true,
+				"https://127.0.0.1:8000":                      true,
+				"https://localhost:5173":                      true,
+			}
+
 			if origin == "" {
 				c.Header("Access-Control-Allow-Origin", "*")
-			} else {
+			} else if allowedOrigins[origin] {
 				c.Header("Access-Control-Allow-Origin", origin)
+			} else {
+				// For production, allow any localhost origin for development
+				if ginMode == gin.ReleaseMode {
+					c.Header("Access-Control-Allow-Origin", "*")
+				}
 			}
 		}
 
+		// Set comprehensive CORS headers
 		c.Header("Access-Control-Allow-Credentials", "true")
-		c.Header("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With, X-HTTP-Method-Override")
-		c.Header("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE, PATCH, HEAD")
+		c.Header("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With, X-HTTP-Method-Override, X-Forwarded-For, X-Real-IP")
+		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD")
 		c.Header("Access-Control-Max-Age", "86400")
+		c.Header("Access-Control-Expose-Headers", "Authorization, Content-Length, X-CSRF-Token")
 
+		// Handle preflight requests
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)
 			return

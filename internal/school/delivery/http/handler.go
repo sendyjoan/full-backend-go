@@ -89,9 +89,15 @@ func New(api huma.API, svc service.SchoolService, jwtSecrets jwt.Secrets) {
 			return nil, huma.Error500InternalServerError(err.Error())
 		}
 
+		// Extract the data from the response
+		schoolData, ok := result.Data.(school.School)
+		if !ok {
+			return nil, huma.Error500InternalServerError("Invalid response data type")
+		}
+
 		return &struct {
 			Body school.School
-		}{Body: *result}, nil
+		}{Body: schoolData}, nil
 	})
 
 	// GET /schools/{id} - Get school by ID
@@ -126,9 +132,15 @@ func New(api huma.API, svc service.SchoolService, jwtSecrets jwt.Secrets) {
 			return nil, huma.Error500InternalServerError(err.Error())
 		}
 
+		// Extract the data from the response
+		schoolData, ok := result.Data.(school.School)
+		if !ok {
+			return nil, huma.Error500InternalServerError("Invalid response data type")
+		}
+
 		return &struct {
 			Body school.School
-		}{Body: *result}, nil
+		}{Body: schoolData}, nil
 	})
 
 	// PUT /schools/{id} - Update school
@@ -164,9 +176,15 @@ func New(api huma.API, svc service.SchoolService, jwtSecrets jwt.Secrets) {
 			return nil, huma.Error500InternalServerError(err.Error())
 		}
 
+		// Extract the data from the response
+		schoolData, ok := result.Data.(school.School)
+		if !ok {
+			return nil, huma.Error500InternalServerError("Invalid response data type")
+		}
+
 		return &struct {
 			Body school.School
-		}{Body: *result}, nil
+		}{Body: schoolData}, nil
 	})
 
 	// DELETE /schools/{id} - Delete school
@@ -193,7 +211,7 @@ func New(api huma.API, svc service.SchoolService, jwtSecrets jwt.Secrets) {
 			return nil, huma.Error400BadRequest("Invalid school ID")
 		}
 
-		err = h.svc.DeleteSchool(ctx, id)
+		result, err := h.svc.DeleteSchool(ctx, id)
 		if err != nil {
 			if err.Error() == "school not found" {
 				return nil, huma.Error404NotFound("School not found")
@@ -203,7 +221,7 @@ func New(api huma.API, svc service.SchoolService, jwtSecrets jwt.Secrets) {
 
 		return &struct {
 			Body map[string]string
-		}{Body: map[string]string{"message": "School deleted successfully"}}, nil
+		}{Body: map[string]string{"message": result.Message}}, nil
 	})
 
 	// Majority routes
@@ -272,9 +290,15 @@ func New(api huma.API, svc service.SchoolService, jwtSecrets jwt.Secrets) {
 			return nil, huma.Error500InternalServerError(err.Error())
 		}
 
+		// Extract the data from the response
+		majorityData, ok := result.Data.(school.Majority)
+		if !ok {
+			return nil, huma.Error500InternalServerError("Invalid response data type")
+		}
+
 		return &struct {
 			Body school.Majority
-		}{Body: *result}, nil
+		}{Body: majorityData}, nil
 	})
 
 	// Continue with other endpoints...

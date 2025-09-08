@@ -110,16 +110,26 @@ func RateLimitMiddleware(rate time.Duration, capacity int) gin.HandlerFunc {
 // SecurityHeadersMiddleware adds security headers
 func SecurityHeadersMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Skip security headers for OPTIONS requests (preflight)
+		if c.Request.Method == "OPTIONS" {
+			c.Next()
+			return
+		}
+
 		c.Header("X-Content-Type-Options", "nosniff")
 		c.Header("X-Frame-Options", "SAMEORIGIN") // Changed from DENY to SAMEORIGIN for docs
 		c.Header("X-XSS-Protection", "1; mode=block")
-		c.Header("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
 
-		// More permissive CSP for API docs
-		if c.Request.URL.Path == "/docs" {
-			c.Header("Content-Security-Policy", "default-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; font-src 'self' data: https:; img-src 'self' data: https:")
+		// Only add HSTS in production and for HTTPS
+		if gin.Mode() == gin.ReleaseMode && c.Request.TLS != nil {
+			c.Header("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+		}
+
+		// More permissive CSP for API docs and development
+		if c.Request.URL.Path == "/docs" || gin.Mode() != gin.ReleaseMode {
+			c.Header("Content-Security-Policy", "default-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; font-src 'self' data: https:; img-src 'self' data: https:")
 		} else {
-			c.Header("Content-Security-Policy", "default-src 'self'")
+			c.Header("Content-Security-Policy", "default-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'")
 		}
 
 		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")

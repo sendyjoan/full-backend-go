@@ -23,9 +23,24 @@ var SmtpPass string
 
 // LoadEnv load .env variables
 func LoadEnv() {
+	// Try to load .env from current directory first
 	err := godotenv.Load()
 	if err != nil {
-		log.Println("⚠️  No .env file found, using system environment")
+		// Try loading from parent directory (in case running from cmd/server/)
+		err = godotenv.Load("../../.env")
+		if err != nil {
+			// Try loading from project root
+			err = godotenv.Load("./.env")
+			if err != nil {
+				log.Println("⚠️  No .env file found, using system environment")
+			} else {
+				log.Println("✅ .env loaded from project root")
+			}
+		} else {
+			log.Println("✅ .env loaded from parent directory")
+		}
+	} else {
+		log.Println("✅ .env loaded from current directory")
 	}
 }
 
@@ -40,9 +55,28 @@ func InitConfig() {
 	dbPort := os.Getenv("DB_PORT")
 	dbName := os.Getenv("DB_NAME")
 
+	// Debug: Print environment variables (remove in production)
+	log.Printf("🔧 DB Config - Host: %s, Port: %s, User: %s, DB: %s", dbHost, dbPort, dbUser, dbName)
+
+	// Validate required database environment variables
+	if dbHost == "" {
+		log.Fatal("❌ DB_HOST environment variable is required")
+	}
+	if dbPort == "" {
+		log.Fatal("❌ DB_PORT environment variable is required")
+	}
+	if dbUser == "" {
+		log.Fatal("❌ DB_USER environment variable is required")
+	}
+	if dbName == "" {
+		log.Fatal("❌ DB_NAME environment variable is required")
+	}
+
 	// MySQL DSN format
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 		dbUser, dbPass, dbHost, dbPort, dbName)
+
+	log.Printf("🔧 DSN: %s", dsn)
 
 	var err error
 	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})

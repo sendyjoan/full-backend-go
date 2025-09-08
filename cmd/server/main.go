@@ -42,10 +42,10 @@ func main() {
 	// Router (Gin) + Huma (OpenAPI runtime)
 	r := gin.Default()
 
-	// Add middlewares
+	// Add middlewares in proper order
+	r.Use(middleware.CORSMiddleware()) // CORS first
 	r.Use(middleware.RecoveryMiddleware())
 	r.Use(middleware.SecurityHeadersMiddleware())
-	r.Use(middleware.CORSMiddleware())
 	r.Use(middleware.FormDataToJSONMiddleware()) // Add FormData support
 	r.Use(middleware.LoggingMiddleware())
 	r.Use(middleware.RateLimitMiddleware(time.Second, 100)) // 100 requests per second per IP
@@ -154,6 +154,21 @@ func main() {
 			"service": "Schooltech API Service",
 		})
 	})
+
+	// CORS test endpoint
+	r.GET("/cors-test", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"message": "CORS is working correctly!",
+			"origin":  c.Request.Header.Get("Origin"),
+			"method":  c.Request.Method,
+			"headers": c.Request.Header,
+			"time":    time.Now(),
+		})
+	})
+
+	// Serve static files for CORS testing
+	r.Static("/static", "./static")
+	r.StaticFile("/test-cors", "./test-cors.html")
 
 	// Start server
 	appLogger.Info("starting server", "port", port)

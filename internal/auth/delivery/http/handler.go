@@ -6,7 +6,9 @@ import (
 
 	"backend-service-internpro/internal/auth"
 	"backend-service-internpro/internal/auth/service"
+	"backend-service-internpro/internal/pkg/constants"
 	apperrors "backend-service-internpro/internal/pkg/errors"
+	"backend-service-internpro/internal/pkg/response"
 
 	"github.com/danielgtaylor/huma/v2"
 )
@@ -39,14 +41,28 @@ func New(api huma.API, svc service.Service) {
 		access, refresh, err := h.svc.Login(in.Body.UsernameOrEmail, in.Body.Password, ua, ip)
 		if err != nil {
 			if appErr, ok := apperrors.IsAppError(err); ok {
-				return nil, appErr.ToHumaError()
+				return &struct {
+					Body auth.LoginResponse
+				}{
+					Body: *response.Error(appErr.Message),
+				}, nil
 			}
-			return nil, huma.Error500InternalServerError("login failed")
+			return &struct {
+				Body auth.LoginResponse
+			}{
+				Body: *response.Error(constants.LoginFailed),
+			}, nil
 		}
+
+		loginData := auth.LoginData{
+			AccessToken:  access,
+			RefreshToken: refresh,
+		}
+
 		return &struct {
 			Body auth.LoginResponse
 		}{
-			Body: auth.LoginResponse{AccessToken: access, RefreshToken: refresh},
+			Body: *response.Success(constants.LoginSuccess, loginData),
 		}, nil
 	})
 
@@ -69,14 +85,27 @@ func New(api huma.API, svc service.Service) {
 		access, err := h.svc.Refresh(in.Body.RefreshToken, ua, ip)
 		if err != nil {
 			if appErr, ok := apperrors.IsAppError(err); ok {
-				return nil, appErr.ToHumaError()
+				return &struct {
+					Body auth.RefreshResponse
+				}{
+					Body: *response.Error(appErr.Message),
+				}, nil
 			}
-			return nil, huma.Error500InternalServerError("refresh failed")
+			return &struct {
+				Body auth.RefreshResponse
+			}{
+				Body: *response.Error(constants.RefreshFailed),
+			}, nil
 		}
+
+		refreshData := auth.RefreshData{
+			AccessToken: access,
+		}
+
 		return &struct {
 			Body auth.RefreshResponse
 		}{
-			Body: auth.RefreshResponse{AccessToken: access},
+			Body: *response.Success(constants.RefreshSuccess, refreshData),
 		}, nil
 	})
 
@@ -93,14 +122,22 @@ func New(api huma.API, svc service.Service) {
 	}, error) {
 		if err := h.svc.Logout(in.Body.RefreshToken); err != nil {
 			if appErr, ok := apperrors.IsAppError(err); ok {
-				return nil, appErr.ToHumaError()
+				return &struct {
+					Body auth.BasicResponse
+				}{
+					Body: *response.Error(appErr.Message),
+				}, nil
 			}
-			return nil, huma.Error500InternalServerError("logout failed")
+			return &struct {
+				Body auth.BasicResponse
+			}{
+				Body: *response.Error(constants.LogoutFailed),
+			}, nil
 		}
 		return &struct {
 			Body auth.BasicResponse
 		}{
-			Body: auth.BasicResponse{Message: "logout successful"},
+			Body: *response.SuccessWithoutData(constants.LogoutSuccess),
 		}, nil
 	})
 
@@ -124,7 +161,7 @@ func New(api huma.API, svc service.Service) {
 		return &struct {
 			Body auth.BasicResponse
 		}{
-			Body: auth.BasicResponse{Message: "If the email exists, an OTP has been sent"},
+			Body: *response.SuccessWithoutData(constants.OTPSent),
 		}, nil
 	})
 
@@ -141,14 +178,22 @@ func New(api huma.API, svc service.Service) {
 	}, error) {
 		if err := h.svc.VerifyOTP(in.Body.Email, in.Body.OTP); err != nil {
 			if appErr, ok := apperrors.IsAppError(err); ok {
-				return nil, appErr.ToHumaError()
+				return &struct {
+					Body auth.BasicResponse
+				}{
+					Body: *response.Error(appErr.Message),
+				}, nil
 			}
-			return nil, huma.Error500InternalServerError("verification failed")
+			return &struct {
+				Body auth.BasicResponse
+			}{
+				Body: *response.Error(constants.OTPInvalid),
+			}, nil
 		}
 		return &struct {
 			Body auth.BasicResponse
 		}{
-			Body: auth.BasicResponse{Message: "OTP verified successfully"},
+			Body: *response.SuccessWithoutData(constants.OTPVerified),
 		}, nil
 	})
 
@@ -165,14 +210,22 @@ func New(api huma.API, svc service.Service) {
 	}, error) {
 		if err := h.svc.ResetPassword(in.Body.Email, in.Body.OTP, in.Body.NewPassword); err != nil {
 			if appErr, ok := apperrors.IsAppError(err); ok {
-				return nil, appErr.ToHumaError()
+				return &struct {
+					Body auth.BasicResponse
+				}{
+					Body: *response.Error(appErr.Message),
+				}, nil
 			}
-			return nil, huma.Error500InternalServerError("password reset failed")
+			return &struct {
+				Body auth.BasicResponse
+			}{
+				Body: *response.Error(constants.PasswordResetFailed),
+			}, nil
 		}
 		return &struct {
 			Body auth.BasicResponse
 		}{
-			Body: auth.BasicResponse{Message: "Password reset successful"},
+			Body: *response.SuccessWithoutData(constants.PasswordResetSuccess),
 		}, nil
 	})
 }

@@ -1,22 +1,31 @@
 package auth
 
+import "backend-service-internpro/internal/pkg/response"
+
 // Login
 type LoginRequest struct {
 	UsernameOrEmail string `json:"username_or_email" form:"username_or_email"`
 	Password        string `json:"password" form:"password"`
 }
-type LoginResponse struct {
+
+type LoginData struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
+	User         User   `json:"user"`
 }
+
+type LoginResponse = response.ApiResponse
 
 // Refresh
 type RefreshRequest struct {
 	RefreshToken string `json:"refresh_token" form:"refresh_token"`
 }
-type RefreshResponse struct {
+
+type RefreshData struct {
 	AccessToken string `json:"access_token"`
 }
+
+type RefreshResponse = response.ApiResponse
 
 // Forgot password
 type ForgotRequest struct {
@@ -32,6 +41,4 @@ type ResetPasswordRequest struct {
 	NewPassword string `json:"new_password" form:"new_password"`
 }
 
-type BasicResponse struct {
-	Message string `json:"message"`
-}
+type BasicResponse = response.ApiResponse
